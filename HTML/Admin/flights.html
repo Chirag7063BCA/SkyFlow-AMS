@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flights - SkyFlow Admin</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html"><span>◉</span><span>Dashboard</span></a>
+        <a class="nav-item active" href="flights.html"><span>✈</span><span>Flights</span></a>
+        <a class="nav-item" href="bookings.html"><span>◫</span><span>Bookings</span></a>
+        <a class="nav-item" href="passengers.html"><span>◌</span><span>Passengers</span></a>
+        <a class="nav-item" href="settings.html"><span>⚙</span><span>Settings</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Today’s Focus</h3>
+        <p>Monitor 18 departures, 12 arrivals, and 4 priority alerts.</p>
+        <button type="button" onclick="location.href='flight-board.html'">View Flight Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Fleet Management</p>
+          <h2>Flights Overview</h2>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="ghost-btn" onclick="location.href='export-report.html'">Export Report</button>
+          <button type="button" class="primary-btn" onclick="location.href='new-flight.html'">+ New Flight</button>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <p>Total Flights (Today)</p>
+          <h3>142</h3>
+          <span class="positive">All on schedule</span>
+        </article>
+        <article class="stat-card">
+          <p>On-Time Performance</p>
+          <h3>94.2%</h3>
+          <span class="positive">+1.2% vs yesterday</span>
+        </article>
+        <article class="stat-card">
+          <p>Active Delays</p>
+          <h3>4</h3>
+          <span class="warning">Weather related</span>
+        </article>
+        <article class="stat-card">
+          <p>Cancellations</p>
+          <h3>0</h3>
+          <span class="neutral">0% impact</span>
+        </article>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-header">
+          <h3>Active Fleet Schedule</h3>
+          <div>
+            <input type="text" class="form-control"
+              style="width:250px; padding:8px 12px; background: rgba(255,255,255,0.5);"
+              placeholder="Search flight # or city...">
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Flight No.</th>
+              <th>Origin</th>
+              <th>Destination</th>
+              <th>Departure Time</th>
+              <th>Status</th>
+              <th>Aircraft</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SF 218</td>
+              <td>Dubai (DXB)</td>
+              <td>London (LHR)</td>
+              <td>10:45 AM</td>
+              <td><span class="chip on-time">On Time</span></td>
+              <td>Boeing 777</td>
+            </tr>
+            <tr>
+              <td>SF 405</td>
+              <td>New York (JFK)</td>
+              <td>Toronto (YYZ)</td>
+              <td>11:20 AM</td>
+              <td><span class="chip delayed">Delayed</span></td>
+              <td>Airbus A320</td>
+            </tr>
+            <tr>
+              <td>SF 774</td>
+              <td>Singapore (SIN)</td>
+              <td>Mumbai (BOM)</td>
+              <td>01:15 PM</td>
+              <td><span class="chip boarding">Boarding</span></td>
+              <td>Boeing 787</td>
+            </tr>
+            <tr>
+              <td>SF 109</td>
+              <td>Paris (CDG)</td>
+              <td>Berlin (BER)</td>
+              <td>03:00 PM</td>
+              <td><span class="chip on-time">Scheduled</span></td>
+              <td>Airbus A350</td>
+            </tr>
+            <tr>
+              <td>SF 992</td>
+              <td>Tokyo (HND)</td>
+              <td>Seoul (ICN)</td>
+              <td>04:30 PM</td>
+              <td><span class="chip on-time">Scheduled</span></td>
+              <td>Boeing 737</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>

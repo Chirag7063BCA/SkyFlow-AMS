@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Flight - SkyFlow Admin</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html"><span>◉</span><span>Dashboard</span></a>
+        <a class="nav-item active" href="flights.html"><span>✈</span><span>Flights</span></a>
+        <a class="nav-item" href="bookings.html"><span>◫</span><span>Bookings</span></a>
+        <a class="nav-item" href="passengers.html"><span>◌</span><span>Passengers</span></a>
+        <a class="nav-item" href="settings.html"><span>⚙</span><span>Settings</span></a>
+      </nav>
+      <div class="sidebar-card">
+        <h3>Today’s Focus</h3>
+        <p>Monitor 18 departures, 12 arrivals, and 4 priority alerts.</p>
+        <button type="button" onclick="location.href='flight-board.html'">View Flight Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Fleet Management</p>
+          <h2>Schedule New Flight</h2>
+        </div>
+      </header>
+
+      <section class="panel" style="max-width: 800px;">
+        <div class="panel-header">
+          <h3>Flight Details</h3>
+        </div>
+        <form>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Flight Number</label>
+              <input type="text" class="form-control" placeholder="e.g. SF 808">
+            </div>
+            <div class="form-group">
+              <label>Aircraft Type</label>
+              <select class="form-control">
+                <option>Boeing 777</option>
+                <option>Airbus A350</option>
+                <option>Boeing 787 Dreamliner</option>
+                <option>Airbus A320</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Origin</label>
+              <input type="text" class="form-control" placeholder="Airport Code (e.g. JFK)">
+            </div>
+            <div class="form-group">
+              <label>Destination</label>
+              <input type="text" class="form-control" placeholder="Airport Code (e.g. LHR)">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Departure Date & Time</label>
+              <input type="datetime-local" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Estimated Arrival</label>
+              <input type="datetime-local" class="form-control">
+            </div>
+          </div>
+          
+          <div style="margin-top: 24px; display:flex; gap:12px;">
+            <button type="button" class="primary-btn" onclick="location.href='flights.html'">Schedule Flight</button>
+            <button type="button" class="ghost-btn" style="color:var(--text-main); border:1px solid var(--border);" onclick="location.href='flights.html'">Cancel</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

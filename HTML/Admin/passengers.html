@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Passengers - SkyFlow Admin</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html"><span>◉</span><span>Dashboard</span></a>
+        <a class="nav-item" href="flights.html"><span>✈</span><span>Flights</span></a>
+        <a class="nav-item" href="bookings.html"><span>◫</span><span>Bookings</span></a>
+        <a class="nav-item active" href="passengers.html"><span>◌</span><span>Passengers</span></a>
+        <a class="nav-item" href="settings.html"><span>⚙</span><span>Settings</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Today’s Focus</h3>
+        <p>Monitor 18 departures, 12 arrivals, and 4 priority alerts.</p>
+        <button type="button" onclick="location.href='flight-board.html'">View Flight Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Customer Directory</p>
+          <h2>Passengers</h2>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="ghost-btn" onclick="location.href='export-report.html'">Export Directory</button>
+        </div>
+      </header>
+
+      <section class="panel table-panel">
+        <div class="panel-header">
+          <h3>Passenger Manifest & Loyalty</h3>
+          <input type="text" class="form-control" style="width:300px; padding:8px 12px; background: rgba(255,255,255,0.5);" placeholder="Search name, email, or ID...">
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Passport / ID</th>
+              <th>Loyalty Tier</th>
+              <th>Miles</th>
+              <th>Upcoming Flight</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Rina Shah</strong></td>
+              <td>P982***11</td>
+              <td><span class="chip delayed">Gold</span></td>
+              <td>142,500</td>
+              <td>SF 218 (LHR)</td>
+              <td>rina.s@example.com</td>
+            </tr>
+            <tr>
+              <td><strong>James Carter</strong></td>
+              <td>P445***92</td>
+              <td><span class="chip neutral" style="background: rgba(15,38,64,0.1); color: #0f2640;">Silver</span></td>
+              <td>45,200</td>
+              <td>SF 405 (YYZ)</td>
+              <td>james.c@example.com</td>
+            </tr>
+            <tr>
+              <td><strong>Amira Khan</strong></td>
+              <td>P112***44</td>
+              <td><span class="chip boarding" style="background: rgba(10,10,10,0.8); color: #fff;">Platinum VIP</span></td>
+              <td>350,000</td>
+              <td>SF 774 (BOM)</td>
+              <td>amira.k@example.com</td>
+            </tr>
+            <tr>
+              <td><strong>Lars Jensen</strong></td>
+              <td>P778***33</td>
+              <td><span class="chip on-time" style="background: rgba(78, 142, 162, 0.15); color: #4e8ea2;">Member</span></td>
+              <td>12,000</td>
+              <td>SF 109 (BER)</td>
+              <td>lars.j@example.com</td>
+            </tr>
+            <tr>
+              <td><strong>Wei Chen</strong></td>
+              <td>P332***76</td>
+              <td><span class="chip delayed">Gold</span></td>
+              <td>180,300</td>
+              <td>SF 992 (ICN)</td>
+              <td>wei.chen@example.com</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

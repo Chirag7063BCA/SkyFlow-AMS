@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - SkyFlow Admin</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html"><span>◉</span><span>Dashboard</span></a>
+        <a class="nav-item" href="flights.html"><span>✈</span><span>Flights</span></a>
+        <a class="nav-item" href="bookings.html"><span>◫</span><span>Bookings</span></a>
+        <a class="nav-item" href="passengers.html"><span>◌</span><span>Passengers</span></a>
+        <a class="nav-item active" href="settings.html"><span>⚙</span><span>Settings</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Today’s Focus</h3>
+        <p>Monitor 18 departures, 12 arrivals, and 4 priority alerts.</p>
+        <button type="button" onclick="location.href='flight-board.html'">View Flight Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">System Preferences</p>
+          <h2>Settings</h2>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="primary-btn">Save Changes</button>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Admin Profile</h3>
+          </div>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="adminName" class="form-control" placeholder="Enter your full name" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="adminEmail" class="form-control" placeholder="Enter your email address" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <div style="position: relative;">
+              <input type="password" id="adminPassword" class="form-control" placeholder="Enter your password" style="padding-right: 44px;" required>
+              <button type="button" onclick="togglePassword()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; padding: 4px;">
+                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg id="eyeIconOff" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+              </button>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <button type="button" class="ghost-btn" style="color:var(--text-main); border:1px solid var(--border);" onclick="showToast()">Update Password</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>System Notifications</h3>
+          </div>
+          <label class="custom-checkbox" style="margin-bottom:16px;">
+            <input type="checkbox" checked> Email Alerts for Delays
+          </label>
+          <hr style="border:none; border-top:1px solid var(--border); margin:16px 0;">
+          <label class="custom-checkbox" style="margin-bottom:16px;">
+            <input type="checkbox" checked> Daily Revenue Summary
+          </label>
+          <hr style="border:none; border-top:1px solid var(--border); margin:16px 0;">
+          <label class="custom-checkbox">
+            <input type="checkbox"> Staffing Warnings
+          </label>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast-notification">Your profile has been successfully updated!</div>
+  <div id="errorToast" class="toast-notification" style="background-color: var(--danger);">Please enter all required valid credentials!</div>
+
+  <script>
+    function togglePassword() {
+      const pwd = document.getElementById('adminPassword');
+      const eyeOn = document.getElementById('eyeIcon');
+      const eyeOff = document.getElementById('eyeIconOff');
+      
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        eyeOn.style.display = 'none';
+        eyeOff.style.display = 'block';
+      } else {
+        pwd.type = 'password';
+        eyeOn.style.display = 'block';
+        eyeOff.style.display = 'none';
+      }
+    }
+
+    function showToast() {
+      const name = document.getElementById('adminName').value.trim();
+      const email = document.getElementById('adminEmail').value.trim();
+      const pwd = document.getElementById('adminPassword').value;
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!name || !email || !pwd || !emailPattern.test(email)) {
+        const errorToast = document.getElementById('errorToast');
+        errorToast.classList.add('show');
+        setTimeout(() => {
+          errorToast.classList.remove('show');
+        }, 3000);
+        return;
+      }
+
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

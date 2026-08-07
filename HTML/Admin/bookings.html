@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookings - SkyFlow Admin</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html"><span>◉</span><span>Dashboard</span></a>
+        <a class="nav-item" href="flights.html"><span>✈</span><span>Flights</span></a>
+        <a class="nav-item active" href="bookings.html"><span>◫</span><span>Bookings</span></a>
+        <a class="nav-item" href="passengers.html"><span>◌</span><span>Passengers</span></a>
+        <a class="nav-item" href="settings.html"><span>⚙</span><span>Settings</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Today’s Focus</h3>
+        <p>Monitor 18 departures, 12 arrivals, and 4 priority alerts.</p>
+        <button type="button" onclick="location.href='flight-board.html'">View Flight Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Revenue & Reservations</p>
+          <h2>Bookings Ledger</h2>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="ghost-btn" onclick="location.href='export-report.html'">Export Revenue</button>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <p>Total Revenue (MTD)</p>
+          <h3>$2.4M</h3>
+          <span class="positive">+15% vs target</span>
+        </article>
+        <article class="stat-card">
+          <p>New Bookings (Today)</p>
+          <h3>342</h3>
+          <span class="positive">+12% vs yesterday</span>
+        </article>
+        <article class="stat-card">
+          <p>Refunds / Cancellations</p>
+          <h3>$12.5K</h3>
+          <span class="warning">Slight increase</span>
+        </article>
+        <article class="stat-card">
+          <p>Average Order Value</p>
+          <h3>$850</h3>
+          <span class="neutral">Stable</span>
+        </article>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-header">
+          <h3>Recent Transactions</h3>
+          <div>
+            <input type="text" class="form-control"
+              style="width:250px; padding:8px 12px; background: rgba(255,255,255,0.5);"
+              placeholder="Search Booking Ref...">
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Booking Ref</th>
+              <th>Passenger</th>
+              <th>Flight No.</th>
+              <th>Class</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#BK-8821</td>
+              <td>Rina Shah</td>
+              <td>SF 218</td>
+              <td>Business</td>
+              <td>$2,450</td>
+              <td><span class="chip on-time">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>#BK-8822</td>
+              <td>James Carter</td>
+              <td>SF 405</td>
+              <td>Economy</td>
+              <td>$420</td>
+              <td><span class="chip boarding">Pending</span></td>
+            </tr>
+            <tr>
+              <td>#BK-8823</td>
+              <td>Amira Khan</td>
+              <td>SF 774</td>
+              <td>First</td>
+              <td>$4,100</td>
+              <td><span class="chip on-time">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>#BK-8824</td>
+              <td>Lars Jensen</td>
+              <td>SF 109</td>
+              <td>Economy</td>
+              <td>$280</td>
+              <td><span class="chip on-time">Confirmed</span></td>
+            </tr>
+            <tr>
+              <td>#BK-8825</td>
+              <td>Wei Chen</td>
+              <td>SF 992</td>
+              <td>Premium Economy</td>
+              <td>$890</td>
+              <td><span class="chip delayed">Cancelled</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>

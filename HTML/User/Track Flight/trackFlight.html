@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Flight | SkyFlow</title>
+
+  <link rel="stylesheet" href="../../../CSS/User/style.css">
+  <link rel="stylesheet" href="../../../CSS/globalcomp/navbar.css">
+  <link rel="stylesheet" href="../../../CSS/globalcomp/footer.css">
+  <link rel="stylesheet" href="../../../CSS/Landingcomp/hero.css">
+  <link rel="stylesheet" href="../../../CSS/Landingcomp/flights.css">
+  <link rel="stylesheet" href="../../../CSS/User/trackFlight.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+
+<body>
+  <div id="navbar-container"></div>
+
+  <main id="app-content">
+    <section class="hero-section track-hero">
+      <div class="hero-content track-hero-content">
+        <p class="hero-eyebrow">Real-Time Radar & Tracking</p>
+        <h1 class="hero-title">
+          KNOW YOUR
+          <span class="animated-text-wrapper">
+            <span class="animated-text hero-title-accent">STATUS</span>
+            <span class="animated-text hero-title-accent delay">FLIGHT</span>
+          </span>
+          ON TRACK
+        </h1>
+        <p class="hero-copy">Get live updates on departures, arrivals, terminal gates, and watch your flight move in
+          real time on our interactive radar map.</p>
+
+        <!-- Premium Search Card -->
+        <div class="search-card">
+          <!-- Form Tabs -->
+          <div class="track-tabs">
+            <button type="button" class="track-tab-btn active" data-tab="flight-number">
+              <span class="tab-icon">✈️</span> Track by Flight Number
+            </button>
+            <button type="button" class="track-tab-btn" data-tab="route">
+              <span class="tab-icon">🗺️</span> Track by Route
+            </button>
+          </div>
+
+          <!-- Flight Number Form Pane -->
+          <div class="tab-pane active" id="pane-flight-number">
+            <div class="fields-wrapper">
+              <div class="fields-row">
+                <div class="flight-field">
+                  <label class="field-label" for="trackFlightNumber">Flight Number</label>
+                  <input id="trackFlightNumber" type="text" class="field-control" placeholder="e.g. EM10000, SI10004">
+                </div>
+                <div class="flight-field">
+                  <label class="field-label" for="trackDate">Date (optional)</label>
+                  <input id="trackDate" type="date" class="field-control">
+                </div>
+              </div>
+              <button id="trackBtnNumber" class="search-btn">Track Flight</button>
+            </div>
+          </div>
+
+          <!-- Route Form Pane -->
+          <div class="tab-pane" id="pane-route" style="display: none;">
+            <div class="fields-wrapper">
+              <div class="fields-row">
+                <div class="flight-field">
+                  <label class="field-label" for="trackFrom">Departure city / airport</label>
+                  <input id="trackFrom" type="text" class="field-control" placeholder="e.g. Goroka or GKA"
+                    autocomplete="off">
+                  <div id="trackFromDropdown" class="autocomplete-dropdown"></div>
+                </div>
+                <div class="flight-field">
+                  <label class="field-label" for="trackTo">Arrival city / airport</label>
+                  <input id="trackTo" type="text" class="field-control" placeholder="e.g. Kundiawa or CMU"
+                    autocomplete="off">
+                  <div id="trackToDropdown" class="autocomplete-dropdown"></div>
+                </div>
+                <div class="flight-field">
+                  <label class="field-label" for="trackDateRoute">Date (optional)</label>
+                  <input id="trackDateRoute" type="date" class="field-control">
+                </div>
+              </div>
+              <button id="trackBtnRoute" class="search-btn">Find Flights</button>
+            </div>
+          </div>
+
+          <p id="trackResult" class="results-msg" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Map and Telemetry Section -->
+    <section class="flights-section track-dashboard-section" id="trackingDashboard" style="display: none;">
+      <div class="flights-header">
+        <div>
+          <p class="flights-eyebrow">Operations Control Center</p>
+          <h2 class="flights-title" id="dashboardTitle">FLIGHT STATUS <span class="flights-title-accent">CENTER</span>
+          </h2>
+        </div>
+        <p class="flights-note" id="dashboardNote">Search and select a flight to begin real-time radar mapping.</p>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- Left Side: Search results list -->
+        <div class="dashboard-left" id="matchedFlightsList" style="display: none;">
+          <h3 class="panel-subtitle">Select a Flight</h3>
+          <div id="resultsGrid" class="flights-grid-compact"></div>
+        </div>
+
+        <!-- Right Side: Leaflet Radar map & Telemetry panel -->
+        <div class="dashboard-right">
+          <div class="radar-card">
+            <div class="radar-header">
+              <div class="radar-title-group">
+                <span class="live-pulse"></span>
+                <h4>SKYFLOW LIVE RADAR</h4>
+              </div>
+              <div class="telemetry-compact">
+                <span id="telemetryStatus" class="pill on-time">ON TIME</span>
+              </div>
+            </div>
+
+            <!-- Leaflet Map -->
+            <div id="trackingMap"></div>
+
+            <!-- Live Telemetry Stats Dashboard -->
+            <div class="telemetry-panel" id="telemetryPanel" style="display: none;">
+              <div class="telemetry-header-details">
+                <div class="airline-brand">
+                  <span id="telAirline" class="airline-name">Emirates</span>
+                  <span id="telFlightNo" class="flight-code">EM10000</span>
+                </div>
+                <div class="aircraft-type-val" id="telAircraft">Boeing 777-300ER</div>
+              </div>
+
+              <!-- Route Progression -->
+              <div class="progression-bar-container">
+                <div class="route-airports">
+                  <div class="airport-point dep">
+                    <span class="code" id="telDepCode">GKA</span>
+                    <span class="city" id="telDepCity">Goroka</span>
+                    <span class="time" id="telDepTime">05:30 AM</span>
+                  </div>
+                  <div class="progress-line-wrapper">
+                    <span class="plane-progress-icon" id="progressBarPlane">✈️</span>
+                    <div class="progress-bar-fill" id="telProgressBar"></div>
+                  </div>
+                  <div class="airport-point arr">
+                    <span class="code" id="telArrCode">CMU</span>
+                    <span class="city" id="telArrCity">Kundiawa</span>
+                    <span class="time" id="telArrTime">06:15 AM</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Telemetry Grid -->
+              <div class="telemetry-grid">
+                <div class="telemetry-item">
+                  <span class="tel-label">ALTITUDE</span>
+                  <span class="tel-val" id="telAltitude">34,000 ft</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="tel-label">GROUND SPEED</span>
+                  <span class="tel-val" id="telSpeed">520 mph</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="tel-label">HEADING</span>
+                  <span class="tel-val" id="telHeading">104°</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="tel-label">EST. REMAINING</span>
+                  <span class="tel-val" id="telTimeRemaining">0h 45m</span>
+                </div>
+              </div>
+
+              <!-- Gate Info -->
+              <div class="gate-info-grid">
+                <div class="gate-item">
+                  <span class="gate-label">DEPARTURE INFORMATION</span>
+                  <span class="gate-val" id="telDepGate">Terminal 1, Gate A3</span>
+                </div>
+                <div class="gate-item">
+                  <span class="gate-label">ARRIVAL INFORMATION</span>
+                  <span class="gate-val" id="telArrGate">Terminal B, Gate 8</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="radar-placeholder" id="radarPlaceholderMsg">
+              <span class="placeholder-icon">📡</span>
+              <p>Radar standby. Select a flight to initialize live telemetry tracking and map routing.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Info Sections -->
+    <section class="feature-section">
+      <div class="flights-header">
+        <div>
+          <p class="flights-eyebrow">Why SkyFlow</p>
+          <h2 class="flights-title">Track flights with confidence</h2>
+        </div>
+        <p class="flights-note">Trusted tracking tools built for modern travelers, crew, and airport teams.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h3>Real-time flight updates</h3>
+          <p>Get fast updates for departures, arrivals, gate changes, and status alerts in one place.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Easy search experience</h3>
+          <p>Track any flight by number or route using a clean interface designed for speed.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Always stay prepared</h3>
+          <p>Receive clear status indicators so you can plan transfers, pickups, and airport time with ease.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Instant device alerts</h3>
+          <p>Opt-in to receive push or email alerts for gate changes and major delays so you never miss an update.</p>
+        </article>
+        <article class="feature-card">
+          <h3>Accurate gate mapping</h3>
+          <p>See terminal and gate changes visually so you can plan transfers and pick-ups faster.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Project Scripts -->
+  <script src="../../../Javascript/User/trackFlight.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Board - SkyFlow Admin</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html"><span>◉</span><span>Dashboard</span></a>
+        <a class="nav-item" href="flights.html"><span>✈</span><span>Flights</span></a>
+        <a class="nav-item" href="bookings.html"><span>◫</span><span>Bookings</span></a>
+        <a class="nav-item" href="passengers.html"><span>◌</span><span>Passengers</span></a>
+        <a class="nav-item" href="settings.html"><span>⚙</span><span>Settings</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Live View</h3>
+        <p>Displaying real-time FIDS data.</p>
+        <button type="button" onclick="location.href='index.html'">Exit Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">FIDS System</p>
+          <h2>Live Flight Board</h2>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="ghost-btn" onclick="location.href='index.html'">Back to Dashboard</button>
+        </div>
+      </header>
+
+      <section class="panel table-panel" style="background: rgba(5, 10, 20, 0.95); color: #fff; box-shadow: 0 0 50px rgba(0,0,0,0.5);">
+        <div class="panel-header">
+          <h3 style="color: #ffb020; letter-spacing: 0.15em; font-size: 1.4rem;">DEPARTURES</h3>
+        </div>
+        <table style="font-size: 1.25rem; font-family: 'Courier New', Courier, monospace; font-weight: bold;">
+          <thead style="border-bottom: 2px solid rgba(255,255,255,0.2);">
+            <tr>
+              <th style="color: #8fb1c8; font-size:1.1rem;">TIME</th>
+              <th style="color: #8fb1c8; font-size:1.1rem;">DESTINATION</th>
+              <th style="color: #8fb1c8; font-size:1.1rem;">FLIGHT</th>
+              <th style="color: #8fb1c8; font-size:1.1rem;">GATE</th>
+              <th style="color: #8fb1c8; font-size:1.1rem;">STATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="color:#fff;">10:45</td><td style="color:#fff;">LONDON</td><td style="color:#ffb020;">SF 218</td><td style="color:#fff;">B12</td><td><span style="color: #28c76f;">DEPARTED</span></td></tr>
+            <tr><td style="color:#fff;">11:20</td><td style="color:#fff;">TORONTO</td><td style="color:#ffb020;">SF 405</td><td style="color:#fff;">A05</td><td><span style="color: #dc2626;">DELAYED 12:00</span></td></tr>
+            <tr><td style="color:#fff;">13:15</td><td style="color:#fff;">MUMBAI</td><td style="color:#ffb020;">SF 774</td><td style="color:#fff;">C08</td><td><span style="color: #5eb8ff;">BOARDING</span></td></tr>
+            <tr><td style="color:#fff;">15:00</td><td style="color:#fff;">BERLIN</td><td style="color:#ffb020;">SF 109</td><td style="color:#fff;">D02</td><td><span style="color: #fff;">ON TIME</span></td></tr>
+            <tr><td style="color:#fff;">16:30</td><td style="color:#fff;">SEOUL</td><td style="color:#ffb020;">SF 992</td><td style="color:#fff;">E04</td><td><span style="color: #fff;">ON TIME</span></td></tr>
+            <tr><td style="color:#fff;">18:00</td><td style="color:#fff;">NEW YORK</td><td style="color:#ffb020;">SF 400</td><td style="color:#fff;">A10</td><td><span style="color: #fff;">ON TIME</span></td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

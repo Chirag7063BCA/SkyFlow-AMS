@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyFlow Admin Dashboard</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item active" href="index.html">
+          <span>◉</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-item" href="flights.html">
+          <span>✈</span>
+          <span>Flights</span>
+        </a>
+        <a class="nav-item" href="bookings.html">
+          <span>◫</span>
+          <span>Bookings</span>
+        </a>
+        <a class="nav-item" href="passengers.html">
+          <span>◌</span>
+          <span>Passengers</span>
+        </a>
+        <a class="nav-item" href="settings.html">
+          <span>⚙</span>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Today’s Focus</h3>
+        <p>Monitor 18 departures, 12 arrivals, and 4 priority alerts.</p>
+        <button type="button" onclick="location.href='flight-board.html'">View Flight Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Operations control center</p>
+          <h2>Welcome back, Admin</h2>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="ghost-btn" onclick="location.href='export-report.html'">Export Report</button>
+          <button type="button" class="primary-btn" onclick="location.href='new-flight.html'">+ New Flight</button>
+        </div>
+      </header>
+
+      <section class="hero-banner">
+        <div class="hero-copy">
+          <p class="badge">Live operations</p>
+          <h3>Run your airline operations from one polished control center.</h3>
+          <p>Track bookings, optimize aircraft schedules, and keep every departure on time.</p>
+          <div class="hero-actions">
+            <button type="button" class="primary-btn" onclick="location.href='index.html'">Open Dashboard</button>
+            <button type="button" class="ghost-btn" onclick="location.href='alerts.html'">Review Alerts</button>
+          </div>
+        </div>
+
+        <div class="hero-metrics">
+          <div class="mini-card">
+            <span>Occupancy</span>
+            <strong>82%</strong>
+          </div>
+          <div class="mini-card">
+            <span>On-Time</span>
+            <strong>94%</strong>
+          </div>
+          <div class="mini-card">
+            <span>Revenue</span>
+            <strong>$1.2M</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <p>Bookings</p>
+          <h3>1,482</h3>
+          <span class="positive">+12% vs last week</span>
+        </article>
+        <article class="stat-card">
+          <p>Revenue</p>
+          <h3>$248K</h3>
+          <span class="positive">+8.4% this month</span>
+        </article>
+        <article class="stat-card">
+          <p>Active Flights</p>
+          <h3>36</h3>
+          <span class="neutral">6 departing soon</span>
+        </article>
+        <article class="stat-card">
+          <p>Support Tickets</p>
+          <h3>18</h3>
+          <span class="warning">3 need urgent reply</span>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel chart-panel">
+          <div class="panel-header">
+            <h3>Weekly Demand</h3>
+            <a href="#">View report</a>
+          </div>
+          <div class="bars" aria-label="Weekly demand chart">
+            <div class="bar-group"><span class="bar mon"></span><label>Mon</label></div>
+            <div class="bar-group"><span class="bar tue"></span><label>Tue</label></div>
+            <div class="bar-group"><span class="bar wed"></span><label>Wed</label></div>
+            <div class="bar-group"><span class="bar thu"></span><label>Thu</label></div>
+            <div class="bar-group"><span class="bar fri"></span><label>Fri</label></div>
+            <div class="bar-group"><span class="bar sat"></span><label>Sat</label></div>
+            <div class="bar-group"><span class="bar sun"></span><label>Sun</label></div>
+          </div>
+        </article>
+
+        <article class="panel activity-panel">
+          <div class="panel-header">
+            <h3>Recent Bookings</h3>
+            <a href="#">See all</a>
+          </div>
+          <ul class="activity-list">
+            <li>
+              <div>
+                <strong>Rina Shah</strong>
+                <p>Business Class · LHR → DXB</p>
+              </div>
+              <span>Confirmed</span>
+            </li>
+            <li>
+              <div>
+                <strong>James Carter</strong>
+                <p>Economy · NYC → SFO</p>
+              </div>
+              <span>Pending</span>
+            </li>
+            <li>
+              <div>
+                <strong>Amira Khan</strong>
+                <p>First Class · SIN → BKK</p>
+              </div>
+              <span>VIP</span>
+            </li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="panel table-panel">
+        <div class="panel-header">
+          <h3>Flight Schedule Overview</h3>
+          <a href="#">View flights</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Flight</th>
+              <th>Route</th>
+              <th>Gate</th>
+              <th>Status</th>
+              <th>ETA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SF 218</td>
+              <td>Dubai → London</td>
+              <td>B12</td>
+              <td><span class="chip on-time">On Time</span></td>
+              <td>14:20</td>
+            </tr>
+            <tr>
+              <td>SF 405</td>
+              <td>New York → Toronto</td>
+              <td>A05</td>
+              <td><span class="chip delayed">Delayed</span></td>
+              <td>15:05</td>
+            </tr>
+            <tr>
+              <td>SF 774</td>
+              <td>Singapore → Mumbai</td>
+              <td>C08</td>
+              <td><span class="chip boarding">Boarding</span></td>
+              <td>16:10</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+
+</html>

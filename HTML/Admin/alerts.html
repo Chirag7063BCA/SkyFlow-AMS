@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerts - SkyFlow Admin</title>
+  <link rel="stylesheet" href="../../CSS/Admin/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">SF</div>
+        <div>
+          <h1>SkyFlow</h1>
+          <p>Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html"><span>◉</span><span>Dashboard</span></a>
+        <a class="nav-item" href="flights.html"><span>✈</span><span>Flights</span></a>
+        <a class="nav-item" href="bookings.html"><span>◫</span><span>Bookings</span></a>
+        <a class="nav-item" href="passengers.html"><span>◌</span><span>Passengers</span></a>
+        <a class="nav-item" href="settings.html"><span>⚙</span><span>Settings</span></a>
+      </nav>
+
+      <div class="sidebar-card">
+        <h3>Today’s Focus</h3>
+        <p>Monitor 18 departures, 12 arrivals, and 4 priority alerts.</p>
+        <button type="button" onclick="location.href='flight-board.html'">View Flight Board</button>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Operations Control</p>
+          <h2>System Alerts</h2>
+        </div>
+        <div class="topbar-actions">
+          <button type="button" class="ghost-btn">Acknowledge All</button>
+        </div>
+      </header>
+
+      <section style="max-width: 900px; display:flex; flex-direction:column; gap:16px;">
+        <div class="alert alert-critical">
+          <div class="alert-content">
+            <strong>CRITICAL: Severe Weather Warning</strong>
+            <p>Thunderstorms at YYZ (Toronto) causing potential grounding. Flights SF 405 and SF 410 impacted. ATC advising 2 hour delays.</p>
+          </div>
+          <button class="ghost-btn" style="background:rgba(220,38,38,0.1); color:var(--danger); border:1px solid rgba(220,38,38,0.3);">Resolve Issue</button>
+        </div>
+
+        <div class="alert alert-warning">
+          <div class="alert-content">
+            <strong>WARNING: Crew Shortage</strong>
+            <p>Cabin crew short by 2 members for SF 109 (CDG -> BER). Standby crew has been notified but pending confirmation.</p>
+          </div>
+          <button class="ghost-btn" style="background:rgba(217, 119, 6, 0.1); color:var(--warning); border:1px solid rgba(217, 119, 6, 0.3);">Resolve Issue</button>
+        </div>
+
+        <div class="alert alert-info">
+          <div class="alert-content">
+            <strong>INFO: Gate Change</strong>
+            <p>SF 774 (SIN -> BOM) moved from Gate C04 to C08 due to aircraft size requirement. Passenger notifications dispatched.</p>
+          </div>
+          <button class="ghost-btn" style="background:rgba(78, 142, 162, 0.1); color:var(--accent-blue); border:1px solid rgba(78, 142, 162, 0.3);">Acknowledge</button>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
