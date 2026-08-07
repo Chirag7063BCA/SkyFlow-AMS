@@ -1,0 +1,36 @@
+/* ==========================================
+   User Master Stylesheet - SkyFlow
+   ========================================== */
+
+/* Global & Component Stylesheet Imports */
+@import "../globalcomp/navbar.css";
+@import "../globalcomp/footer.css";
+@import "../Landingcomp/hero.css";
+@import "../Landingcomp/flights.css";
+@import "signup.css";
+
+/* Global Color Palette Variables */
+:root {
+  --bg-dark: #001D39;
+  --bg-card: #0A4174;
+  --color-steel: #49769F;
+  --color-teal: #4E8EA2;
+  --color-soft-blue: #6EA2B3;
+  --color-sky-blue: #7BBDE8;
+  --color-ice-blue: #BDD8E9;
+  --color-white: #ffffff;
+}
+
+/* Universal Reset & Base Layout */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--color-ice-blue);
+  min-height: 100vh;
+}
