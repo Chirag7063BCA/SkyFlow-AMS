@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="../../../CSS/globalcomp/footer.css">
     <link rel="stylesheet" href="../../../CSS/User/signup.css">
     <link rel="stylesheet" href="../../../CSS/mybookings/mybooking.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="../../../Javascript/User/auth.js"></script>
 </head>
 
 <body>
@@ -228,17 +230,23 @@
     <!-- Footer -->
     <div id="footer-container"></div>
 
-    <script src="../../../Javascript/User/auth.js"></script>
     <script>
         const load = async (url, id) => {
-            try { document.getElementById(id).innerHTML = await (await fetch(url)).text(); }
+            try {
+                const res = await fetch(url);
+                if (res.ok) document.getElementById(id).innerHTML = await res.text();
+            }
             catch (e) { console.error('Error:', e); }
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
             await load('../globalcomp/navbar.html', 'navbar-container');
             await load('../globalcomp/footer.html', 'footer-container');
-            if (typeof initSkyFlowPage === 'function') initSkyFlowPage('bookings');
+            if (typeof initSkyFlowPage === 'function') {
+                initSkyFlowPage('bookings');
+            } else if (typeof updateNavbarUI === 'function') {
+                updateNavbarUI();
+            }
         });
     </script>
 </body>
