@@ -11,16 +11,25 @@ async function initHelpPage() {
   await loadComponent('../globalcomp/footer.html', 'footer-container');
   if (typeof updateNavbarUI === 'function') updateNavbarUI();
 
+  const routes = {
+    home:     '../index.html',
+    flights:  '../index.html#flights',
+    track:    '../Track%20Flight/index.html',
+    bookings: '../mybookings/index.html',
+    offers:   '#',
+    help:     '#'
+  };
+  document.querySelectorAll('.nav-link[data-route]').forEach(link => {
+    const route = link.dataset.route;
+    if (routes[route] !== undefined) {
+      link.href = routes[route];
+      if (route === 'help') link.classList.add('active');
+      else link.classList.remove('active');
+    }
+  });
+
   const logo = document.querySelector('.navbar-logo');
   if (logo) logo.href = '../index.html';
-  const logoImg = document.getElementById('navbarLogoImg');
-  if (logoImg) logoImg.src = '../../../images/navbar logo.gif';
-
-  const links = { '#hero': '../index.html#hero', '#flights': '../index.html#flights', 'mybookings/bookings.html': '../mybookings/bookings.html', 'help/help.html': '#' };
-  Object.entries(links).forEach(([sel, href]) => {
-    const el = document.querySelector(`.nav-link[href="${sel}"]`);
-    if (el) { el.href = href; el.classList.toggle('active', href === '#'); }
-  });
 
   ensureAuthDrawer();
   handleScrollState();

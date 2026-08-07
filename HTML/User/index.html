@@ -131,16 +131,22 @@
     }
 
     function patchNavLinks() {
+      const routes = {
+        home:     'index.html',
+        flights:  'index.html#flights',
+        track:    'Track%20Flight/index.html',
+        bookings: 'mybookings/index.html',
+        offers:   '#',
+        help:     'help/help.html'
+      };
       document.querySelectorAll('.nav-link[data-route]').forEach(link => {
         const route = link.dataset.route;
-        if (route === 'home') link.href = 'index.html';
-        if (route === 'flights') link.href = 'index.html#flights';
-        if (route === 'track') link.href = 'Track%20Flight/trackFlight.html';
-        if (route === 'bookings') link.href = 'mybookings/bookings.html';
+        if (routes[route] !== undefined) link.href = routes[route];
       });
     }
 
     function activateNav(route) {
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
       const activeLink = document.querySelector(`.nav-link[data-route="${route}"]`);
       if (activeLink) activeLink.classList.add('active');
     }
