@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - SkyFlow</title>
+
+    <link rel="stylesheet" href="../../../CSS/User/style.css">
+    <link rel="stylesheet" href="../../../CSS/globalcomp/navbar.css">
+    <link rel="stylesheet" href="../../../CSS/Landingcomp/hero.css">
+    <link rel="stylesheet" href="../../../CSS/globalcomp/footer.css">
+    <link rel="stylesheet" href="../../../CSS/mybookings/mybooking.css">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div id="navbar-container"></div>
+
+    <main id="app-content">
+        <section class="hero-section"
+            style="min-height: 100vh; height: auto; padding-top: 120px; padding-bottom: 60px;">
+            <div class="hero-content">
+
+                <h1 class="hero-title"
+                    style="justify-content: flex-start; text-align: left; margin-bottom: 40px; font-size: clamp(2.5rem, 5vw, 4rem); color: white;">
+                    <a href="../index.html"
+                        style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: flex-start; cursor: pointer;"
+                        title="Back to Home">
+                        MY
+                        <span class="animated-text-wrapper" style="margin: 0 10px;">
+                            <span class="animated-text hero-title-accent">BOOKINGS</span>
+                            <span class="animated-text hero-title-accent delay">FLIGHTS</span>
+                        </span>
+                    </a>
+                </h1>
+
+                <div class="mb-wrapper">
+                    <div class="mb-top-row">
+                        <div class="mb-title-area">
+
+                            <p class="mb-subtitle">View and manage all your flight bookings</p>
+                            <div class="mb-filters">
+                                <button class="mb-filter active">🎫 All Bookings</button>
+                                <button class="mb-filter">✈ Upcoming</button>
+                                <button class="mb-filter">✔ Completed</button>
+                                <button class="mb-filter">❌ Cancelled</button>
+                            </div>
+                        </div>
+                        <div class="mb-promo-card">
+                            <div>
+                                <p class="mb-promo-title">Add your trip to calendar</p>
+                                <p class="mb-promo-sub">Never miss your flight again</p>
+                                <a href="#" class="mb-promo-link">Add Now ➔</a>
+                            </div>
+                            <span class="mb-promo-icon">📅</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-summary-grid">
+                        <div class="mb-stat-card"><span class="mb-icon blue">🎫</span>
+                            <div><b class="mb-stat-num">6</b><br><span class="mb-stat-label">Total Bookings</span></div>
+                        </div>
+                        <div class="mb-stat-card"><span class="mb-icon green">✈</span>
+                            <div><b class="mb-stat-num">4</b><br><span class="mb-stat-label">Upcoming</span></div>
+                        </div>
+                        <div class="mb-stat-card"><span class="mb-icon orange">✔</span>
+                            <div><b class="mb-stat-num">1</b><br><span class="mb-stat-label">Completed</span></div>
+                        </div>
+                        <div class="mb-stat-card"><span class="mb-icon red">❌</span>
+                            <div><b class="mb-stat-num">1</b><br><span class="mb-stat-label">Cancelled</span></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-tickets">
+                        <div class="mb-ticket-card border-blue">
+                            <div class="mb-t-left">
+                                <div class="mb-t-icon blue">✈</div>
+                                <div class="mb-t-badge green">CONFIRMED ✔</div>
+                                <div class="mb-t-pnr"><span>PNR</span><b>AI4521</b></div>
+                                <div class="mb-t-class">Economy</div>
+                            </div>
+                            <div class="mb-t-center">
+                                <div class="mb-t-route">
+                                    <div class="mb-t-city"><b>DEL</b><span>Delhi</span><small>Indira Gandhi Intl.
+                                            Airport</small></div>
+                                    <div class="mb-t-path">
+                                        <div class="mb-t-line"></div><span class="mb-t-plane">✈</span>
+                                    </div>
+                                    <div class="mb-t-city right"><b>BOM</b><span>Mumbai</span><small>Chhatrapati Shivaji
+                                            Intl.
+                                            Airport</small></div>
+                                </div>
+                                <div class="mb-t-details">
+                                    <div><span class="mb-icon-s">📅</span>
+                                        <div><b>12 Aug 2026</b><span>Sat, 08:30 AM</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">⏰</span>
+                                        <div><b>2h 15m</b><span>Non-stop</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">✈</span>
+                                        <div><b>AI 4521</b><span>Air India</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">🪑</span>
+                                        <div><b>14A</b><span>Window</span></div>
+                                    </div>
+                                </div>
+                                <div class="mb-t-footer">
+                                    <div><span>⏰ Boarding Time</span><b>07:45 AM</b></div>
+                                    <div><span>🏛 Terminal</span><b>T3</b></div>
+                                    <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-right">
+                                <button class="mb-btn primary">🎫 View Ticket</button>
+                                <button class="mb-btn">📥 Download</button>
+                                <button class="mb-btn outline">💬 More</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-ticket-card border-purple">
+                            <div class="mb-t-left">
+                                <div class="mb-t-icon purple">✈</div>
+                                <div class="mb-t-badge green">CONFIRMED ✔</div>
+                                <div class="mb-t-pnr"><span>PNR</span><b>AI7834</b></div>
+                                <div class="mb-t-class">Economy</div>
+                            </div>
+                            <div class="mb-t-center">
+                                <div class="mb-t-route">
+                                    <div class="mb-t-city"><b>DEL</b><span>Delhi</span><small>Indira Gandhi Intl.
+                                            Airport</small></div>
+                                    <div class="mb-t-path">
+                                        <div class="mb-t-line"></div><span class="mb-t-plane purple">✈</span>
+                                    </div>
+                                    <div class="mb-t-city right"><b>BLR</b><span>Bengaluru</span><small>Kempegowda Intl.
+                                            Airport</small>
+                                    </div>
+                                </div>
+                                <div class="mb-t-details">
+                                    <div><span class="mb-icon-s">📅</span>
+                                        <div><b>18 Aug 2026</b><span>Fri, 06:20 PM</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">⏰</span>
+                                        <div><b>2h 40m</b><span>Non-stop</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">✈</span>
+                                        <div><b>AI 7834</b><span>Air India</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">🪑</span>
+                                        <div><b>9C</b><span>Aisle</span></div>
+                                    </div>
+                                </div>
+                                <div class="mb-t-footer">
+                                    <div><span>⏰ Boarding Time</span><b>05:30 PM</b></div>
+                                    <div><span>🏛 Terminal</span><b>T1</b></div>
+                                    <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-right">
+                                <button class="mb-btn purple-btn">🎫 View Ticket</button>
+                                <button class="mb-btn">📥 Download</button>
+                                <button class="mb-btn outline">💬 More</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-ticket-card border-orange">
+                            <div class="mb-t-left">
+                                <div class="mb-t-icon orange">✈</div>
+                                <div class="mb-t-badge orange-text">PENDING ⏰</div>
+                                <div class="mb-t-pnr"><span>PNR</span><b>AI1198</b></div>
+                                <div class="mb-t-class">Economy</div>
+                            </div>
+                            <div class="mb-t-center">
+                                <div class="mb-t-route">
+                                    <div class="mb-t-city"><b>BOM</b><span>Mumbai</span><small>Chhatrapati Shivaji Intl.
+                                            Airport</small>
+                                    </div>
+                                    <div class="mb-t-path">
+                                        <div class="mb-t-line"></div><span class="mb-t-plane orange">✈</span>
+                                    </div>
+                                    <div class="mb-t-city right"><b>GOI</b><span>Goa (Dabolim)</span><small>Goa Intl.
+                                            Airport</small>
+                                    </div>
+                                </div>
+                                <div class="mb-t-details">
+                                    <div><span class="mb-icon-s">📅</span>
+                                        <div><b>24 Aug 2026</b><span>Thu, 09:10 AM</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">⏰</span>
+                                        <div><b>1h 20m</b><span>Non-stop</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">✈</span>
+                                        <div><b>AI 1198</b><span>Air India</span></div>
+                                    </div>
+                                    <div><span class="mb-icon-s">🪑</span>
+                                        <div><b>22F</b><span>Window</span></div>
+                                    </div>
+                                </div>
+                                <div class="mb-t-footer">
+                                    <div><span>⏰ Boarding Time</span><b>08:20 AM</b></div>
+                                    <div><span>🏛 Terminal</span><b>T2</b></div>
+                                    <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-right">
+                                <button class="mb-btn orange-btn">🎫 View Ticket</button>
+                                <button class="mb-btn">📥 Download</button>
+                                <button class="mb-btn outline">💬 More</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-reminder">
+                        <div class="mb-rem-icon">🔔</div>
+                        <div class="mb-rem-text">
+                            <b>Travel stress-free!</b>
+                            <p>Arrive at the airport at least 2 hours before departure for domestic flights.</p>
+                        </div>
+                        <div class="mb-rem-plane">✈</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer-container"></div>
+
+    <script>
+        const load = async (url, id) => {
+            try { document.getElementById(id).innerHTML = await (await fetch(url)).text(); }
+            catch (e) { console.error('Error:', e); }
+        };
+
+        function patchNavLinks() {
+            const routes = {
+                home:     '../index.html',
+                flights:  '../index.html#flights',
+                track:    '../Track%20Flight/index.html',
+                bookings: '#',
+                offers:   '#',
+                help:     '../help/help.html'
+            };
+            document.querySelectorAll('.nav-link[data-route]').forEach(link => {
+                const route = link.dataset.route;
+                if (routes[route] !== undefined) {
+                    link.href = routes[route];
+                    if (route === 'bookings') link.classList.add('active');
+                    else link.classList.remove('active');
+                }
+            });
+
+            const logo = document.querySelector('.navbar-logo');
+            if (logo) logo.href = '../index.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await load('../globalcomp/navbar.html', 'navbar-container');
+            patchNavLinks();
+            await load('../globalcomp/footer.html', 'footer-container');
+        });
+    </script>
+</body>
+
+</html>
