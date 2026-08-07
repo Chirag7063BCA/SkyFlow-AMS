@@ -1,0 +1,35 @@
+.track-hero { position: relative; }
+:root { --hero-fade: 1; }
+
+.track-hero::after {
+  content: "";
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(180deg, #0ea5e9 0%, #ffffff 85%);
+  opacity: var(--hero-fade, 1);
+  transition: opacity .18s linear;
+  pointer-events: none;
+}
+
+/* Simple feature grid for symmetry */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-items: center;
+}
+
+.feature-card {
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  text-align: center;
+}
+
+.widget-grid { gap: 1rem; }
+
+/* Small responsive tweaks */
+@media (max-width: 640px) {
+  .feature-grid { grid-template-columns: 1fr; }
+}
