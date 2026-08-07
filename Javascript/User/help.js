@@ -13,13 +13,23 @@ async function initHelpPage() {
 
   const logo = document.querySelector('.navbar-logo');
   if (logo) logo.href = '../index.html';
-  const logoImg = document.getElementById('navbarLogoImg');
+  const logoImg = document.getElementById('navbarLogoImg') || document.querySelector('.logo-gif');
   if (logoImg) logoImg.src = '../../../images/navbar logo.gif';
 
-  const links = { '#hero': '../index.html#hero', '#flights': '../index.html#flights', 'mybookings/bookings.html': '../mybookings/bookings.html', 'help/help.html': '#' };
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+
+  const links = {
+    '#hero': '../index.html',
+    '#flights': '../index.html#flights',
+    'mybookings/bookings.html': '../mybookings/bookings.html',
+    'help/help.html': '#'
+  };
   Object.entries(links).forEach(([sel, href]) => {
     const el = document.querySelector(`.nav-link[href="${sel}"]`);
-    if (el) { el.href = href; el.classList.toggle('active', href === '#'); }
+    if (el) {
+      el.href = href;
+      if (href === '#') el.classList.add('active');
+    }
   });
 
   ensureAuthDrawer();
