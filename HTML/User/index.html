@@ -132,10 +132,10 @@
 
     function patchNavLinks() {
       const routes = {
-        home:     'index.html',
-        flights:  'index.html#flights',
+        home:     '#home',
+        flights:  '#flights',
         track:    'Track%20Flight/index.html',
-        bookings: 'mybookings/index.html',
+        bookings: 'mybookings/mybookings.html',
         offers:   '#',
         help:     'help/help.html'
       };
@@ -151,6 +151,26 @@
       if (activeLink) activeLink.classList.add('active');
     }
 
+    function handleRouteView() {
+      const hash = window.location.hash;
+      const heroView = document.getElementById('hero-view');
+      const flightsView = document.getElementById('flights-view');
+
+      if (hash === '#flights') {
+        if (heroView) heroView.style.display = 'none';
+        if (flightsView) flightsView.style.display = 'block';
+        activateNav('flights');
+      } else {
+        if (heroView) heroView.style.display = 'block';
+        if (flightsView) flightsView.style.display = 'none';
+        activateNav('home');
+      }
+
+      if (document.getElementById('nav-toggle')) {
+        document.getElementById('nav-toggle').checked = false;
+      }
+    }
+
     async function initApp() {
       if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
@@ -159,7 +179,6 @@
       // Load global components
       await loadComponent('globalcomp/navbar.html', 'navbar-container');
       patchNavLinks();
-      activateNav('home');
       await loadComponent('globalcomp/footer.html', 'footer-container');
 
       // Load main page contents (hero and flights sections)
@@ -176,6 +195,12 @@
           <div id="hero-view">${heroHtml}</div>
           <div id="flights-view" style="display: none;">${flightsHtml}</div>
         `;
+
+        // Handle initial view based on hash
+        handleRouteView();
+
+        // Listen for hash changes
+        window.addEventListener('hashchange', handleRouteView);
 
         // Load flights script to wire up search filters and render flights
         const script = document.createElement('script');

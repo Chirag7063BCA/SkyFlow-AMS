@@ -91,7 +91,7 @@ function updateNavbarUI() {
             </div>
           </div>
           <div class="user-dropdown-divider"></div>
-          <a href="#" class="user-dropdown-link" onclick="window.location.href='../mybookings/bookings.html'; return false;">My Bookings</a>
+          <a href="#" class="user-dropdown-link" onclick="const p = window.location.pathname.includes('/mybookings/') ? 'mybookings.html' : '../mybookings/mybookings.html'; window.location.href=p; return false;">My Bookings</a>
           <button type="button" class="user-dropdown-link logout-btn" id="logoutBtn">Sign Out</button>
         </div>
       </div>`;

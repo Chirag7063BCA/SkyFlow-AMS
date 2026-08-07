@@ -15,7 +15,7 @@ async function initHelpPage() {
     home:     '../index.html',
     flights:  '../index.html#flights',
     track:    '../Track%20Flight/index.html',
-    bookings: '../mybookings/index.html',
+    bookings: '../mybookings/mybookings.html',
     offers:   '#',
     help:     '#'
   };
