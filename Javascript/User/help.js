@@ -9,31 +9,7 @@ async function loadComponent(url, id) {
 async function initHelpPage() {
   await loadComponent('../globalcomp/navbar.html', 'navbar-container');
   await loadComponent('../globalcomp/footer.html', 'footer-container');
-  if (typeof updateNavbarUI === 'function') updateNavbarUI();
-
-  const routes = {
-    home:     '../index.html',
-    flights:  '../index.html#flights',
-    track:    '../Track%20Flight/index.html',
-    bookings: '../mybookings/mybookings.html',
-    offers:   '#',
-    help:     '#'
-  };
-  document.querySelectorAll('.nav-link[data-route]').forEach(link => {
-    const route = link.dataset.route;
-    if (routes[route] !== undefined) {
-      link.href = routes[route];
-      if (route === 'help') link.classList.add('active');
-      else link.classList.remove('active');
-    }
-  });
-
-  const logo = document.querySelector('.navbar-logo');
-  if (logo) logo.href = '../index.html';
-
-
-
-  ensureAuthDrawer();
+  if (typeof initSkyFlowPage === 'function') initSkyFlowPage('help');
   handleScrollState();
 }
 

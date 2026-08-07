@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../../../CSS/globalcomp/navbar.css">
     <link rel="stylesheet" href="../../../CSS/Landingcomp/hero.css">
     <link rel="stylesheet" href="../../../CSS/globalcomp/footer.css">
+    <link rel="stylesheet" href="../../../CSS/User/signup.css">
     <link rel="stylesheet" href="../../../CSS/mybookings/mybooking.css">
 </head>
 
@@ -227,38 +228,17 @@
     <!-- Footer -->
     <div id="footer-container"></div>
 
+    <script src="../../../Javascript/User/auth.js"></script>
     <script>
         const load = async (url, id) => {
             try { document.getElementById(id).innerHTML = await (await fetch(url)).text(); }
             catch (e) { console.error('Error:', e); }
         };
 
-        function patchNavLinks() {
-            const routes = {
-                home:     '../index.html',
-                flights:  '../index.html#flights',
-                track:    '../Track%20Flight/index.html',
-                bookings: '#',
-                offers:   '#',
-                help:     '../help/help.html'
-            };
-            document.querySelectorAll('.nav-link[data-route]').forEach(link => {
-                const route = link.dataset.route;
-                if (routes[route] !== undefined) {
-                    link.href = routes[route];
-                    if (route === 'bookings') link.classList.add('active');
-                    else link.classList.remove('active');
-                }
-            });
-
-            const logo = document.querySelector('.navbar-logo');
-            if (logo) logo.href = '../index.html';
-        }
-
         window.addEventListener('DOMContentLoaded', async () => {
             await load('../globalcomp/navbar.html', 'navbar-container');
-            patchNavLinks();
             await load('../globalcomp/footer.html', 'footer-container');
+            if (typeof initSkyFlowPage === 'function') initSkyFlowPage('bookings');
         });
     </script>
 </body>

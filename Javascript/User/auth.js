@@ -1,8 +1,99 @@
-/* SkyFlow AMS - Authentication & Google OAuth Logic */
+/* SkyFlow AMS - Shared Authentication, Navbar & Component Logic */
 const GOOGLE_CLIENT_ID = "630801472891-mqjmbt925glbg0do6qd3ei9c2adsuvei.apps.googleusercontent.com";
 
-// 1. Drawer Controls & Tab Switcher
+// 1. Dynamic Injection of Auth Drawer if missing
+function ensureAuthDrawer() {
+  if (document.getElementById('signupDrawer')) return;
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="signupDrawer" class="signup-drawer">
+      <div id="drawerOverlay" class="drawer-overlay"></div>
+      <div class="drawer-panel">
+        <div class="drawer-header">
+          <div class="drawer-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 15.5L11.5 3l-1.8 8.2L21 9.5 8.5 21l2.3-8.5L3 15.5Z" fill="#2563eb"/>
+            </svg>
+            <h2 id="drawerTitle">Welcome Back</h2>
+          </div>
+          <button type="button" id="closeDrawerBtn" class="close-btn">&times;</button>
+        </div>
+        <div class="auth-tabs">
+          <button type="button" id="signinTab" class="tab-btn active" onclick="switchTab('signin')">Sign In</button>
+          <button type="button" id="signupTab" class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+        </div>
+        <form id="signinForm" class="auth-form">
+          <div class="form-group">
+            <label for="signinEmail">Email Address</label>
+            <input type="email" id="signinEmail" placeholder="name@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="signinPassword">Password</label>
+            <input type="password" id="signinPassword" placeholder="••••••••" required>
+          </div>
+          <div class="form-options">
+            <label class="remember-me">
+              <input type="checkbox" id="rememberMe">
+              <span>Remember me</span>
+            </label>
+            <a href="#" class="forgot-link" onclick="alert('Password reset link sent to your email!'); return false;">Forgot password?</a>
+          </div>
+          <button type="submit" class="submit-btn">Sign In</button>
+        </form>
+        <form id="signupForm" class="auth-form" style="display: none;">
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" placeholder="John Doe" required>
+          </div>
+          <div class="form-group">
+            <label for="signupEmail">Email Address</label>
+            <input type="email" id="signupEmail" placeholder="name@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" placeholder="At least 6 characters" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" placeholder="Re-enter password" required minlength="6">
+          </div>
+          <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+        <div class="divider"><span>OR</span></div>
+        <button type="button" class="google-btn" onclick="handleGoogleLogin()">
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+        <p id="authSwitchFooter" class="footer-text">
+          Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>
+        </p>
+      </div>
+    </div>`);
+  bindFormListeners();
+}
+
+function bindFormListeners() {
+  document.getElementById('signinForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('signinEmail')?.value.trim();
+    if (email) loginUser({ name: email.split('@')[0], email: email });
+  });
+
+  document.getElementById('signupForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('fullName')?.value.trim() || 'Traveler';
+    const email = document.getElementById('signupEmail')?.value.trim() || 'user@example.com';
+    loginUser({ name: name, email: email });
+  });
+}
+
+// 2. Drawer Controls & Tab Switcher
 function openDrawer(tab = 'signin') {
+  ensureAuthDrawer();
   const drawer = document.getElementById('signupDrawer');
   if (drawer) {
     drawer.classList.add('active');
@@ -31,7 +122,7 @@ function switchTab(mode) {
   if (drawerTitle) drawerTitle.textContent = isSignIn ? 'Welcome Back' : 'Create Account';
 }
 
-// 2. Google OAuth 2.0 Login Handler
+// 3. Google OAuth 2.0 Login Handler
 function handleGoogleLogin() {
   if (window.location.protocol === 'file:') {
     loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" });
@@ -56,7 +147,7 @@ function handleGoogleLogin() {
   }
 }
 
-// 3. User Session & Dynamic Navbar Profile Avatar
+// 4. User Session & Dynamic Navbar Profile Avatar
 function loginUser(userData) {
   localStorage.setItem('skyflow_user', JSON.stringify(userData));
   updateNavbarUI();
@@ -72,6 +163,12 @@ function updateNavbarUI() {
   const user = JSON.parse(localStorage.getItem('skyflow_user') || 'null');
   const navActions = document.getElementById('navActions');
   if (!navActions) return;
+
+  const isSubdir = window.location.pathname.includes('/help/') ||
+                   window.location.pathname.includes('/mybookings/') ||
+                   window.location.pathname.includes('/Track%20Flight/') ||
+                   window.location.pathname.includes('/Track Flight/');
+  const myBookingsPath = isSubdir ? '../mybookings/mybookings.html' : 'mybookings/mybookings.html';
 
   if (user) {
     const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
@@ -91,16 +188,71 @@ function updateNavbarUI() {
             </div>
           </div>
           <div class="user-dropdown-divider"></div>
-          <a href="#" class="user-dropdown-link" onclick="const p = window.location.pathname.includes('/mybookings/') ? 'mybookings.html' : '../mybookings/mybookings.html'; window.location.href=p; return false;">My Bookings</a>
+          <a href="${myBookingsPath}" class="user-dropdown-link">My Bookings</a>
           <button type="button" class="user-dropdown-link logout-btn" id="logoutBtn">Sign Out</button>
         </div>
       </div>`;
   } else {
-    navActions.innerHTML = `<a href="#" class="btn-signin" id="openSignupBtn"><span>Sign In / Join</span></a>`;
+    navActions.innerHTML = `<a href="#" class="btn-signin" id="openSignupBtn" onclick="openDrawer(); return false;"><span>Sign In / Join</span></a>`;
   }
 }
 
-// 4. Global Navbar Scroll Transition
+// 5. Global Page Initializer (Navbar, Footer, Routes, Logo, Drawer)
+function initSkyFlowPage(activeRoute = 'home') {
+  ensureAuthDrawer();
+  
+  const isSubdir = window.location.pathname.includes('/help/') ||
+                   window.location.pathname.includes('/mybookings/') ||
+                   window.location.pathname.includes('/Track%20Flight/') ||
+                   window.location.pathname.includes('/Track Flight/');
+
+  // Fix logo image src
+  const logoImg = document.getElementById('navbarLogoImg');
+  if (logoImg) {
+    logoImg.src = isSubdir ? '../../../images/navbar logo.gif' : '../../images/navbar logo.gif';
+  }
+
+  // Define route mapping for all links
+  const routes = isSubdir ? {
+    home:     '../index.html#home',
+    flights:  '../index.html#flights',
+    track:    '../Track%20Flight/index.html',
+    bookings: '../mybookings/mybookings.html',
+    offers:   '#',
+    help:     '../help/help.html'
+  } : {
+    home:     '#home',
+    flights:  '#flights',
+    track:    'Track%20Flight/index.html',
+    bookings: 'mybookings/mybookings.html',
+    offers:   '#',
+    help:     'help/help.html'
+  };
+
+  // Patch all navigation and logo links
+  document.querySelectorAll('a[data-route]').forEach(link => {
+    const route = link.dataset.route;
+    if (routes[route] !== undefined) {
+      link.href = routes[route];
+    }
+  });
+
+  const logoLink = document.querySelector('.navbar-logo');
+  if (logoLink) {
+    logoLink.href = isSubdir ? '../index.html' : 'index.html';
+  }
+
+  // Activate current route in navbar
+  document.querySelectorAll('.nav-link').forEach(l => {
+    const route = l.dataset.route;
+    l.classList.toggle('active', route === activeRoute);
+  });
+
+  // Update sign-in / user profile state
+  updateNavbarUI();
+}
+
+// 6. Global Navbar Scroll Transition
 function handleGlobalNavbarScroll() {
   const header = document.querySelector('.site-header');
   if (header) {
@@ -109,7 +261,7 @@ function handleGlobalNavbarScroll() {
 }
 window.addEventListener('scroll', handleGlobalNavbarScroll);
 
-// 5. Global Event Delegation
+// 7. Global Event Delegation
 document.addEventListener('click', (e) => {
   if (e.target.closest('.btn-signin') || e.target.closest('#openSignupBtn')) {
     e.preventDefault();
@@ -140,18 +292,6 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   handleGlobalNavbarScroll();
+  ensureAuthDrawer();
   updateNavbarUI();
-
-  document.getElementById('signinForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('signinEmail').value.trim();
-    loginUser({ name: email.split('@')[0], email: email });
-  });
-
-  document.getElementById('signupForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('fullName')?.value.trim() || 'Traveler';
-    const email = document.getElementById('signupEmail')?.value.trim() || 'user@example.com';
-    loginUser({ name: name, email: email });
-  });
 });
