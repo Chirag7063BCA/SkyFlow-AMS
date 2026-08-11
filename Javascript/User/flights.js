@@ -364,15 +364,16 @@ async function init() {
     applyFilters(allFlights, true);
     if (document.getElementById('hero-view')) document.getElementById('hero-view').style.display = 'none';
     if (document.getElementById('flights-view')) document.getElementById('flights-view').style.display = 'block';
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#flights'));
+    window.location.hash = '#flights';
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.route === 'flights' || l.getAttribute('href')?.includes('flights')));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   document.getElementById('fsbSearchBtn')?.addEventListener('click', () => applyFilters(allFlights, true));
-  document.getElementById('fsbFrom')?.addEventListener('input', () => applyFilters(allFlights, true));
-  document.getElementById('fsbTo')?.addEventListener('input', () => applyFilters(allFlights, true));
-  document.getElementById('flightSearch')?.addEventListener('input', () => applyFilters(allFlights, true));
-  document.getElementById('nonStop')?.addEventListener('change', () => applyFilters(allFlights, true));
+  document.getElementById('fsbFrom')?.addEventListener('input', () => applyFilters(allFilters, true));
+  document.getElementById('fsbTo')?.addEventListener('input', () => applyFilters(allFilters, true));
+  document.getElementById('flightSearch')?.addEventListener('input', () => applyFilters(allFilters, true));
+  document.getElementById('nonStop')?.addEventListener('change', () => applyFilters(allFilters, true));
   document.addEventListener('click', e => !e.target.closest('.flight-field') && document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.classList.remove('show')));
 
   const swap = (fid, tid) => { const a=document.getElementById(fid), b=document.getElementById(tid); if(a&&b) [a.value, b.value] = [b.value, a.value]; applyFilters(allFlights, true); };
@@ -383,21 +384,23 @@ async function init() {
   document.addEventListener('change', e => (e.target.matches('.stop-filter, .airline-filter')) && applyFilters(allFlights, true));
 
   document.querySelectorAll('.nav-link').forEach(link => link.addEventListener('click', e => {
-    const href = link.getAttribute('href');
-    if (['#hero', '#flights'].includes(href)) {
-      e.preventDefault();
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-      if (document.getElementById('nav-toggle')) document.getElementById('nav-toggle').checked = false;
-      const isHero = href === '#hero';
-      if (document.getElementById('hero-view')) document.getElementById('hero-view').style.display = isHero ? 'block' : 'none';
-      if (document.getElementById('flights-view')) {
+    const route = link.dataset.route;
+    const href = link.getAttribute('href') || '';
+    if (route === 'home' || route === 'flights' || href.includes('#home') || href.includes('#flights') || href === '#') {
+      const isHero = route === 'home' || href.includes('#home');
+      const targetHash = isHero ? '#home' : '#flights';
+
+      // If hero-view and flights-view exist on current page (index.html)
+      if (document.getElementById('hero-view') && document.getElementById('flights-view')) {
+        e.preventDefault();
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        if (document.getElementById('nav-toggle')) document.getElementById('nav-toggle').checked = false;
+        document.getElementById('hero-view').style.display = isHero ? 'block' : 'none';
         document.getElementById('flights-view').style.display = isHero ? 'none' : 'block';
+        window.location.hash = targetHash;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (!href.startsWith('#')) {
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
     }
   }));
 }

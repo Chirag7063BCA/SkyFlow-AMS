@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - SkyFlow</title>
+
+    <link rel="stylesheet" href="../../../CSS/User/style.css">
+    <link rel="stylesheet" href="../../../CSS/globalcomp/navbar.css">
+    <link rel="stylesheet" href="../../../CSS/Landingcomp/hero.css">
+    <link rel="stylesheet" href="../../../CSS/globalcomp/footer.css">
+    <link rel="stylesheet" href="../../../CSS/User/signup.css">
+    <link rel="stylesheet" href="../../../CSS/mybookings/mybooking.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="../../../Javascript/User/auth.js"></script>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <div id="navbar-container"></div>
+
+    <main id="app-content">
+        <!-- Hero: title, subtitle, filters, promo card + blurred stat cards -->
+        <section class="hero-section mb-hero-section">
+            <div class="hero-content">
+                <div class="mb-wrapper">
+                    <div class="mb-top-row">
+                        <div class="mb-title-area">
+                            <h1 class="hero-title"
+                                style="justify-content: flex-start; text-align: left; margin-bottom: 8px; font-size: clamp(1.8rem, 5vw, 3.5rem); color: white;">
+                                <a href="../index.html"
+                                    style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: flex-start; cursor: pointer;"
+                                    title="Back to Home">
+                                    MY
+                                    <span class="animated-text-wrapper" style="margin: 0 10px;">
+                                        <span class="animated-text hero-title-accent">BOOKINGS</span>
+                                        <span class="animated-text hero-title-accent delay">FLIGHTS</span>
+                                    </span>
+                                </a>
+                            </h1>
+                            <p class="mb-subtitle">View and manage all your flight bookings</p>
+                            <div class="mb-filters">
+                                <button class="mb-filter active" data-filter="all">🎫 All Bookings</button>
+                                <button class="mb-filter" data-filter="upcoming">✈ Upcoming</button>
+                                <button class="mb-filter" data-filter="completed">✔ Completed</button>
+                                <button class="mb-filter" data-filter="cancelled">❌ Cancelled</button>
+                            </div>
+                        </div>
+                        <div class="mb-promo-card">
+                            <div>
+                                <p class="mb-promo-title">Add your trip to calendar</p>
+                                <p class="mb-promo-sub">Never miss your flight again</p>
+                                <a href="#" class="mb-promo-link">Add Now ➔</a>
+                            </div>
+                            <span class="mb-promo-icon">📅</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-summary-grid">
+                        <div class="mb-stat-card" data-filter="all" style="cursor: pointer;"><span class="mb-icon blue">🎫</span>
+                            <div><b class="mb-stat-num">6</b><br><span class="mb-stat-label">Total Bookings</span></div>
+                        </div>
+                        <div class="mb-stat-card" data-filter="upcoming" style="cursor: pointer;"><span class="mb-icon green">✈</span>
+                            <div><b class="mb-stat-num">4</b><br><span class="mb-stat-label">Upcoming</span></div>
+                        </div>
+                        <div class="mb-stat-card" data-filter="completed" style="cursor: pointer;"><span class="mb-icon orange">✔</span>
+                            <div><b class="mb-stat-num">1</b><br><span class="mb-stat-label">Completed</span></div>
+                        </div>
+                        <div class="mb-stat-card" data-filter="cancelled" style="cursor: pointer;"><span class="mb-icon red">❌</span>
+                            <div><b class="mb-stat-num">1</b><br><span class="mb-stat-label">Cancelled</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- White section: tickets + reminder -->
+        <section class="mb-content-section">
+            <div class="mb-wrapper">
+                <div class="mb-tickets" id="mbTicketsContainer">
+                    <!-- Card 1: Upcoming/Confirmed -->
+                    <div class="mb-ticket-card border-blue" data-status="upcoming">
+                        <div class="mb-t-left">
+                            <div class="mb-t-icon blue">✈</div>
+                            <div class="mb-t-badge green">CONFIRMED ✔</div>
+                            <div class="mb-t-pnr"><span>PNR</span><b>AI4521</b></div>
+                            <div class="mb-t-class">Economy</div>
+                        </div>
+                        <div class="mb-t-center">
+                            <div class="mb-t-route">
+                                <div class="mb-t-city"><b>DEL</b><span>Delhi</span><small>Indira Gandhi Intl.
+                                        Airport</small></div>
+                                <div class="mb-t-path">
+                                    <div class="mb-t-line"></div><span class="mb-t-plane">✈</span>
+                                </div>
+                                <div class="mb-t-city right"><b>BOM</b><span>Mumbai</span><small>Chhatrapati Shivaji
+                                        Intl.
+                                        Airport</small></div>
+                            </div>
+                            <div class="mb-t-details">
+                                <div><span class="mb-icon-s">📅</span>
+                                    <div><b>12 Aug 2026</b><span>Sat, 08:30 AM</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">⏰</span>
+                                    <div><b>2h 15m</b><span>Non-stop</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">✈</span>
+                                    <div><b>AI 4521</b><span>Air India</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">🪑</span>
+                                    <div><b>14A</b><span>Window</span></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-footer">
+                                <div><span>⏰ Boarding Time</span><b>07:45 AM</b></div>
+                                <div><span>🏛 Terminal</span><b>T3</b></div>
+                                <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                            </div>
+                        </div>
+                        <div class="mb-t-right">
+                            <button class="mb-btn primary">🎫 View Ticket</button>
+                            <button class="mb-btn">📥 Download</button>
+                            <button class="mb-btn outline">💬 More</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Upcoming/Confirmed -->
+                    <div class="mb-ticket-card border-purple" data-status="upcoming">
+                        <div class="mb-t-left">
+                            <div class="mb-t-icon purple">✈</div>
+                            <div class="mb-t-badge green">CONFIRMED ✔</div>
+                            <div class="mb-t-pnr"><span>PNR</span><b>AI7834</b></div>
+                            <div class="mb-t-class">Economy</div>
+                        </div>
+                        <div class="mb-t-center">
+                            <div class="mb-t-route">
+                                <div class="mb-t-city"><b>DEL</b><span>Delhi</span><small>Indira Gandhi Intl.
+                                        Airport</small></div>
+                                <div class="mb-t-path">
+                                    <div class="mb-t-line"></div><span class="mb-t-plane purple">✈</span>
+                                </div>
+                                <div class="mb-t-city right"><b>BLR</b><span>Bengaluru</span><small>Kempegowda Intl.
+                                        Airport</small>
+                                </div>
+                            </div>
+                            <div class="mb-t-details">
+                                <div><span class="mb-icon-s">📅</span>
+                                    <div><b>18 Aug 2026</b><span>Fri, 06:20 PM</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">⏰</span>
+                                    <div><b>2h 40m</b><span>Non-stop</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">✈</span>
+                                    <div><b>AI 7834</b><span>Air India</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">🪑</span>
+                                    <div><b>9C</b><span>Aisle</span></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-footer">
+                                <div><span>⏰ Boarding Time</span><b>05:30 PM</b></div>
+                                <div><span>🏛 Terminal</span><b>T1</b></div>
+                                <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                            </div>
+                        </div>
+                        <div class="mb-t-right">
+                            <button class="mb-btn purple-btn">🎫 View Ticket</button>
+                            <button class="mb-btn">📥 Download</button>
+                            <button class="mb-btn outline">💬 More</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Upcoming/Pending -->
+                    <div class="mb-ticket-card border-orange" data-status="upcoming">
+                        <div class="mb-t-left">
+                            <div class="mb-t-icon orange">✈</div>
+                            <div class="mb-t-badge orange-text">PENDING ⏰</div>
+                            <div class="mb-t-pnr"><span>PNR</span><b>AI1198</b></div>
+                            <div class="mb-t-class">Economy</div>
+                        </div>
+                        <div class="mb-t-center">
+                            <div class="mb-t-route">
+                                <div class="mb-t-city"><b>BOM</b><span>Mumbai</span><small>Chhatrapati Shivaji Intl.
+                                        Airport</small>
+                                </div>
+                                <div class="mb-t-path">
+                                    <div class="mb-t-line"></div><span class="mb-t-plane orange">✈</span>
+                                </div>
+                                <div class="mb-t-city right"><b>GOI</b><span>Goa (Dabolim)</span><small>Goa Intl.
+                                        Airport</small>
+                                </div>
+                            </div>
+                            <div class="mb-t-details">
+                                <div><span class="mb-icon-s">📅</span>
+                                    <div><b>24 Aug 2026</b><span>Thu, 09:10 AM</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">⏰</span>
+                                    <div><b>1h 20m</b><span>Non-stop</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">✈</span>
+                                    <div><b>AI 1198</b><span>Air India</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">🪑</span>
+                                    <div><b>22F</b><span>Window</span></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-footer">
+                                <div><span>⏰ Boarding Time</span><b>08:20 AM</b></div>
+                                <div><span>🏛 Terminal</span><b>T2</b></div>
+                                <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                            </div>
+                        </div>
+                        <div class="mb-t-right">
+                            <button class="mb-btn orange-btn">🎫 View Ticket</button>
+                            <button class="mb-btn">📥 Download</button>
+                            <button class="mb-btn outline">💬 More</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Upcoming/Confirmed -->
+                    <div class="mb-ticket-card border-blue" data-status="upcoming">
+                        <div class="mb-t-left">
+                            <div class="mb-t-icon blue">✈</div>
+                            <div class="mb-t-badge green">CONFIRMED ✔</div>
+                            <div class="mb-t-pnr"><span>PNR</span><b>AI2204</b></div>
+                            <div class="mb-t-class">Business</div>
+                        </div>
+                        <div class="mb-t-center">
+                            <div class="mb-t-route">
+                                <div class="mb-t-city"><b>BLR</b><span>Bengaluru</span><small>Kempegowda Intl. Airport</small></div>
+                                <div class="mb-t-path">
+                                    <div class="mb-t-line"></div><span class="mb-t-plane">✈</span>
+                                </div>
+                                <div class="mb-t-city right"><b>MAA</b><span>Chennai</span><small>Chennai Intl. Airport</small></div>
+                            </div>
+                            <div class="mb-t-details">
+                                <div><span class="mb-icon-s">📅</span>
+                                    <div><b>30 Aug 2026</b><span>Sun, 11:15 AM</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">⏰</span>
+                                    <div><b>1h 05m</b><span>Non-stop</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">✈</span>
+                                    <div><b>AI 2204</b><span>Air India</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">🪑</span>
+                                    <div><b>2D</b><span>Aisle</span></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-footer">
+                                <div><span>⏰ Boarding Time</span><b>10:30 AM</b></div>
+                                <div><span>🏛 Terminal</span><b>T2</b></div>
+                                <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                            </div>
+                        </div>
+                        <div class="mb-t-right">
+                            <button class="mb-btn primary">🎫 View Ticket</button>
+                            <button class="mb-btn">📥 Download</button>
+                            <button class="mb-btn outline">💬 More</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Completed -->
+                    <div class="mb-ticket-card border-green" data-status="completed">
+                        <div class="mb-t-left">
+                            <div class="mb-t-icon green">✈</div>
+                            <div class="mb-t-badge green">COMPLETED ✔</div>
+                            <div class="mb-t-pnr"><span>PNR</span><b>AI9942</b></div>
+                            <div class="mb-t-class">Economy</div>
+                        </div>
+                        <div class="mb-t-center">
+                            <div class="mb-t-route">
+                                <div class="mb-t-city"><b>BOM</b><span>Mumbai</span><small>Chhatrapati Shivaji Intl. Airport</small></div>
+                                <div class="mb-t-path">
+                                    <div class="mb-t-line"></div><span class="mb-t-plane green">✈</span>
+                                </div>
+                                <div class="mb-t-city right"><b>DEL</b><span>Delhi</span><small>Indira Gandhi Intl. Airport</small></div>
+                            </div>
+                            <div class="mb-t-details">
+                                <div><span class="mb-icon-s">📅</span>
+                                    <div><b>15 Jul 2026</b><span>Wed, 10:00 AM</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">⏰</span>
+                                    <div><b>2h 10m</b><span>Non-stop</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">✈</span>
+                                    <div><b>AI 9942</b><span>Air India</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">🪑</span>
+                                    <div><b>12B</b><span>Middle</span></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-footer">
+                                <div><span>⏰ Status</span><b style="color:#16a34a;">Flight Completed</b></div>
+                                <div><span>🏛 Terminal</span><b>T2</b></div>
+                                <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                            </div>
+                        </div>
+                        <div class="mb-t-right">
+                            <button class="mb-btn primary">🎫 View Invoice</button>
+                            <button class="mb-btn">📥 Download</button>
+                        </div>
+                    </div>
+
+                    <!-- Card 6: Cancelled -->
+                    <div class="mb-ticket-card border-red" data-status="cancelled">
+                        <div class="mb-t-left">
+                            <div class="mb-t-icon red">✈</div>
+                            <div class="mb-t-badge red-text">CANCELLED ❌</div>
+                            <div class="mb-t-pnr"><span>PNR</span><b>AI3310</b></div>
+                            <div class="mb-t-class">Economy</div>
+                        </div>
+                        <div class="mb-t-center">
+                            <div class="mb-t-route">
+                                <div class="mb-t-city"><b>DEL</b><span>Delhi</span><small>Indira Gandhi Intl. Airport</small></div>
+                                <div class="mb-t-path">
+                                    <div class="mb-t-line"></div><span class="mb-t-plane red">✈</span>
+                                </div>
+                                <div class="mb-t-city right"><b>CCU</b><span>Kolkata</span><small>Netaji Subhash Chandra Bose Intl.</small></div>
+                            </div>
+                            <div class="mb-t-details">
+                                <div><span class="mb-icon-s">📅</span>
+                                    <div><b>02 Jul 2026</b><span>Thu, 04:45 PM</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">⏰</span>
+                                    <div><b>2h 25m</b><span>Non-stop</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">✈</span>
+                                    <div><b>AI 3310</b><span>Air India</span></div>
+                                </div>
+                                <div><span class="mb-icon-s">🪑</span>
+                                    <div><b>18C</b><span>Aisle</span></div>
+                                </div>
+                            </div>
+                            <div class="mb-t-footer">
+                                <div><span>💳 Refund Status</span><b style="color:#16a34a;">Refund Processed</b></div>
+                                <div><span>🏛 Terminal</span><b>T3</b></div>
+                                <div><span>👤 Passenger</span><b>Aman Sharma</b></div>
+                            </div>
+                        </div>
+                        <div class="mb-t-right">
+                            <button class="mb-btn outline">💬 Refund Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-reminder">
+                    <div class="mb-rem-icon">🔔</div>
+                    <div class="mb-rem-text">
+                        <b>Travel stress-free!</b>
+                        <p>Arrive at the airport at least 2 hours before departure for domestic flights.</p>
+                    </div>
+                    <div class="mb-rem-plane">✈</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <div id="footer-container"></div>
+
+    <script>
+        const load = async (url, id) => {
+            try {
+                const res = await fetch(url);
+                if (res.ok) document.getElementById(id).innerHTML = await res.text();
+            }
+            catch (e) { console.error('Error:', e); }
+        };
+
+        function setupBookingFilters() {
+            const filterBtns = document.querySelectorAll('.mb-filter');
+            const ticketCards = document.querySelectorAll('.mb-ticket-card');
+            const statCards = document.querySelectorAll('.mb-stat-card');
+
+            function applyFilter(targetFilter) {
+                // Update active tab button style
+                filterBtns.forEach(btn => {
+                    if (btn.getAttribute('data-filter') === targetFilter) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Filter cards visibility with smooth transition
+                let visibleCount = 0;
+                ticketCards.forEach(card => {
+                    const status = card.getAttribute('data-status');
+                    if (targetFilter === 'all' || status === targetFilter) {
+                        card.style.display = 'flex';
+                        card.style.opacity = '1';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                        card.style.opacity = '0';
+                    }
+                });
+
+                // Handle empty state message
+                let emptyEl = document.getElementById('mb-empty-state');
+                if (visibleCount === 0) {
+                    if (!emptyEl) {
+                        emptyEl = document.createElement('div');
+                        emptyEl.id = 'mb-empty-state';
+                        emptyEl.className = 'mb-empty-state';
+                        emptyEl.innerHTML = `
+                            <div class="mb-empty-icon">📭</div>
+                            <h3 style="text-transform: capitalize;">No ${targetFilter} bookings</h3>
+                            <p>You currently do not have any bookings listed under this category.</p>
+                        `;
+                        document.getElementById('mbTicketsContainer').appendChild(emptyEl);
+                    } else {
+                        emptyEl.style.display = 'block';
+                        emptyEl.querySelector('h3').textContent = `No ${targetFilter} bookings`;
+                    }
+                } else if (emptyEl) {
+                    emptyEl.style.display = 'none';
+                }
+            }
+
+            // Tab button click listener
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const filter = btn.getAttribute('data-filter');
+                    if (filter) applyFilter(filter);
+                });
+            });
+
+            // Stat cards click listener
+            statCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const filter = card.getAttribute('data-filter');
+                    if (filter) applyFilter(filter);
+                });
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await load('../globalcomp/navbar.html', 'navbar-container');
+            await load('../globalcomp/footer.html', 'footer-container');
+            setupBookingFilters();
+            if (typeof initSkyFlowPage === 'function') {
+                initSkyFlowPage('bookings');
+            } else if (typeof updateNavbarUI === 'function') {
+                updateNavbarUI();
+            }
+        });
+    </script>
+</body>
+
+</html>

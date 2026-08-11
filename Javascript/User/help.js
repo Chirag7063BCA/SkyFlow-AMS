@@ -9,20 +9,7 @@ async function loadComponent(url, id) {
 async function initHelpPage() {
   await loadComponent('../globalcomp/navbar.html', 'navbar-container');
   await loadComponent('../globalcomp/footer.html', 'footer-container');
-  if (typeof updateNavbarUI === 'function') updateNavbarUI();
-
-  const logo = document.querySelector('.navbar-logo');
-  if (logo) logo.href = '../index.html';
-  const logoImg = document.getElementById('navbarLogoImg');
-  if (logoImg) logoImg.src = '../../../images/navbar logo.gif';
-
-  const links = { '#hero': '../index.html#hero', '#flights': '../index.html#flights', 'mybookings/bookings.html': '../mybookings/bookings.html', 'help/help.html': '#' };
-  Object.entries(links).forEach(([sel, href]) => {
-    const el = document.querySelector(`.nav-link[href="${sel}"]`);
-    if (el) { el.href = href; el.classList.toggle('active', href === '#'); }
-  });
-
-  ensureAuthDrawer();
+  if (typeof initSkyFlowPage === 'function') initSkyFlowPage('help');
   handleScrollState();
 }
 
