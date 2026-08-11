@@ -269,14 +269,14 @@ function initSkyFlowPage(activeRoute = 'home') {
   const routes = isSubdir ? {
     home:     '../index.html#home',
     flights:  '../index.html#flights',
-    track:    '../Track%20Flight/index.html',
+    track:    '../Track%20Flight/trackFlight.html',
     bookings: '../mybookings/mybookings.html',
     offers:   '#',
     help:     '../help/help.html'
   } : {
     home:     '#home',
     flights:  '#flights',
-    track:    'Track%20Flight/index.html',
+    track:    'Track%20Flight/trackFlight.html',
     bookings: 'mybookings/mybookings.html',
     offers:   '#',
     help:     'help/help.html'

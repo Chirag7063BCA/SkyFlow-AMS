@@ -86,7 +86,11 @@ function loadGlobalComponents(callback) {
         .then(function(navbarHtml) {
             if (navbarHtml !== '') {
                 document.getElementById('navbar-container').innerHTML = navbarHtml;
-                patchNavbarPaths();
+                if (typeof initSkyFlowPage === 'function') {
+                    initSkyFlowPage('track');
+                } else {
+                    patchNavbarPaths();
+                }
             }
             return fetch('../globalcomp/footer.html');
         })
@@ -128,7 +132,7 @@ function patchNavbarPaths() {
             link.href = 'trackFlight.html';
             link.classList.add('active');
         } else if (text === 'my bookings') {
-            link.href = '../mybookings/bookings.html';
+            link.href = '../mybookings/mybookings.html';
         } else if (text === 'help') {
             link.href = '../help/help.html';
         } else if (text === 'offers') {
