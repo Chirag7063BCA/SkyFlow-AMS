@@ -91,7 +91,7 @@ function updateNavbarUI() {
             </div>
           </div>
           <div class="user-dropdown-divider"></div>
-          <a href="#" class="user-dropdown-link" onclick="window.location.href='../mybookings/bookings.html'; return false;">My Bookings</a>
+          <a href="#" class="user-dropdown-link" onclick="window.location.href='../mybookings/mybookings.html'; return false;">My Bookings</a>
           <button type="button" class="user-dropdown-link logout-btn" id="logoutBtn">Sign Out</button>
         </div>
       </div>`;
@@ -100,7 +100,62 @@ function updateNavbarUI() {
   }
 }
 
-// 4. Global Navbar Scroll Transition
+// 5. Global Page Initializer (Navbar, Footer, Routes, Logo, Drawer)
+function initSkyFlowPage(activeRoute = 'home') {
+  ensureAuthDrawer();
+  
+  const isSubdir = window.location.pathname.includes('/help/') ||
+                   window.location.pathname.includes('/mybookings/') ||
+                   window.location.pathname.includes('/Track%20Flight/') ||
+                   window.location.pathname.includes('/Track Flight/');
+
+  // Fix logo image src
+  const logoImg = document.getElementById('navbarLogoImg');
+  if (logoImg) {
+    logoImg.src = isSubdir ? '../../../images/navbar logo.gif' : '../../images/navbar logo.gif';
+  }
+
+  // Define route mapping for all links
+  const routes = isSubdir ? {
+    home:     '../index.html#home',
+    flights:  '../index.html#flights',
+    track:    '../Track%20Flight/trackFlight.html',
+    bookings: '../mybookings/mybookings.html',
+    offers:   '#',
+    help:     '../help/help.html'
+  } : {
+    home:     '#home',
+    flights:  '#flights',
+    track:    'Track%20Flight/trackFlight.html',
+    bookings: 'mybookings/mybookings.html',
+    offers:   '#',
+    help:     'help/help.html'
+  };
+
+  // Patch all navigation and logo links
+  document.querySelectorAll('a[data-route]').forEach(link => {
+    const route = link.dataset.route;
+    if (routes[route] !== undefined) {
+      link.href = routes[route];
+    }
+  });
+
+  const logoLink = document.querySelector('.navbar-logo');
+  if (logoLink) {
+    logoLink.href = isSubdir ? '../index.html' : 'index.html';
+  }
+
+  // Activate current route in navbar
+  document.querySelectorAll('.nav-link').forEach(l => {
+    const route = l.dataset.route;
+    l.classList.toggle('active', route === activeRoute);
+  });
+
+  // Update sign-in / user profile state
+  updateNavbarUI();
+}
+
+// 6. Global Navbar Scroll Transition
 function handleGlobalNavbarScroll() {
   const header = document.querySelector('.site-header');
   if (header) {
