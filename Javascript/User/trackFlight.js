@@ -135,7 +135,7 @@ function patchNavbarPaths() {
             link.href = '../mybookings/mybookings.html';
         } else if (text === 'help') {
             link.href = '../help/help.html';
-        } else if (text === 'offers') {
+        } else if (text === 'offers' || text === 'ai help') {
             link.href = '../index.html#offers';
         }
     }
