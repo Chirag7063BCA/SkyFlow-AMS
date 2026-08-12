@@ -531,10 +531,6 @@
     margin-left: auto;
 }
 
-#openSignupBtn {
-    display: none !important;
-}
-
 @media (max-width: 768px) {
 
     .mb-t-left,
