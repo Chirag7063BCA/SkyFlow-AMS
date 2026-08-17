@@ -192,7 +192,7 @@ select.field-control {
   border: 1px solid rgba(15, 38, 64, 0.15);
   border-radius: 14px;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.16);
-  z-index: 10000 !important;
+  z-index: 999;
   max-height: 290px;
   overflow-y: auto;
   opacity: 0;
