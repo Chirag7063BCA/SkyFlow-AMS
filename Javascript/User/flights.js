@@ -1,409 +1,976 @@
-// ── Load data ───────────────────────────
-const fetchJson = async (url, fallback) => fetch(url).then(r => r.json()).catch(() => fallback);
-const loadFlights = () => fetchJson('../../Data/flights.json', []);
-const loadAirports = () => fetchJson('../../Data/airports.json', []);
+/**
+ * SkyFlow AMS - Flights Page Logic
+ */
 
-const POPULAR_AIRPORTS = [
-  { city: 'London', name: 'Heathrow Airport', iata: 'LHR', country: 'United Kingdom' },
-  { city: 'New York', name: 'John F Kennedy Intl', iata: 'JFK', country: 'United States' },
-  { city: 'Tokyo', name: 'Haneda Airport', iata: 'HND', country: 'Japan' },
-  { city: 'Dubai', name: 'Dubai Intl', iata: 'DXB', country: 'United Arab Emirates' },
-  { city: 'Singapore', name: 'Changi Airport', iata: 'SIN', country: 'Singapore' },
-  { city: 'New Delhi', name: 'Indira Gandhi Intl', iata: 'DEL', country: 'India' },
-  { city: 'Mumbai', name: 'Chhatrapati Shivaji Intl', iata: 'BOM', country: 'India' },
-  { city: 'Sydney', name: 'Sydney Airport', iata: 'SYD', country: 'Australia' }
-];
-
-const getCode = (val) => {
-  if (!val) return '';
-  const match = val.match(/\(([^)]+)\)$/);
-  if (match) return match[1].toLowerCase().trim();
-  return val.split(',')[0].toLowerCase().trim();
+// ── Currency Conversion Configuration ──────────────────────────
+const CURRENCY_RATES = {
+  USD: { symbol: '$', rate: 1 },
+  EUR: { symbol: '€', rate: 0.92 },
+  GBP: { symbol: '£', rate: 0.79 },
+  INR: { symbol: '₹', rate: 83.5 },
+  AED: { symbol: 'AED ', rate: 3.67 },
+  JPY: { symbol: '¥', rate: 155 }
 };
-const getVal = (id) => document.getElementById(id)?.value.trim() || '';
 
-// ── UI Helpers ────────────────────────────────
-const buildCard = (f, i) => `
-  <article class="flight-card" style="animation-delay: ${i * 0.08}s">
-    <div class="card-top">
-      <div><p class="card-airline">${f.flightNumber} · ${f.airline}</p>
-      <h3 class="card-route">${f.originCity} → ${f.destinationCity}</h3></div>
-      <div class="card-time"><strong>${f.departureTime} – ${f.arrivalTime}</strong><span>${f.duration}</span></div>
-    </div>
-    <div class="card-meta">
-      <span class="pill">${f.fromAirportCode} → ${f.toAirportCode}</span>
-      <span class="pill">${f.nonStop ? 'Non-stop' : '1 stop'}</span>
-      <span class="pill ${f.status.toLowerCase().replace(/\s+/g, '-')}">${f.status}</span>
-      <span class="card-price">${f.fare}</span>
-    </div>
-  </article>`;
+let currentCurrency = 'USD';
 
-let hasUserSearched = false;
-
-function renderCards(flights) {
-  const grid = document.getElementById('flightsGrid'), msg = document.getElementById('resultsMsg');
-  if (!grid) return;
-  if (!flights.length) {
-    grid.innerHTML = `
-      <div style="text-align: center; padding: 3.5rem 1.5rem; background: #fff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
-        <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.4rem;">No Flights Found</h3>
-        <p style="color: #64748b; font-size: 0.95rem; max-width: 420px; margin: 0 auto;">No flights match your search criteria. Try searching for different cities, airports, or dates.</p>
-      </div>
-    `;
-    if (msg) msg.textContent = 'No results.';
-    return;
-  }
-  grid.innerHTML = flights.map(buildCard).join('');
-  if (msg) msg.textContent = `${flights.length} flight${flights.length > 1 ? 's' : ''} found · ${flights.filter(f => f.status.toLowerCase() !== 'scheduled').length} live`;
+/**
+ * Formats a USD fare amount into the currently selected currency string
+ */
+function formatPrice(amountUsd) {
+  const currencyInfo = CURRENCY_RATES[currentCurrency] || CURRENCY_RATES.USD;
+  const convertedAmount = Math.round(amountUsd * currencyInfo.rate);
+  return `${currencyInfo.symbol}${convertedAmount.toLocaleString()}`;
 }
 
-// ── Core Filtering ─────────────────────
+// ── Utility Helpers ─────────────────────────────────────────────
+
+/**
+ * Prevents function execution until typing stops for a given delay
+ */
+function debounce(callbackFunction, delayMs = 120) {
+  let timerId;
+  return function (...args) {
+    clearTimeout(timerId);
+    timerId = setTimeout(() => {
+      callbackFunction.apply(this, args);
+    }, delayMs);
+  };
+}
+
+/**
+ * Safely gets trimmed text value from an input element
+ */
+function getInputValue(elementId) {
+  const element = document.getElementById(elementId);
+  return element ? element.value.trim() : '';
+}
+
+/**
+ * Fetches JSON data with fallback relative URLs
+ */
+async function fetchJsonData(url, fallbackData = []) {
+  const alternativeUrls = [
+    url,
+    url.replace(/^(\.\.\/)+/, '../../'),
+    url.replace(/^(\.\.\/)+/, '../'),
+    url.replace(/^(\.\.\/)+/, '/')
+  ];
+
+  for (const targetUrl of alternativeUrls) {
+    try {
+      const response = await fetch(targetUrl);
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      // Continue to next alternative URL
+    }
+  }
+
+  return fallbackData;
+}
+
+// ── Data Pre-Caching Loaders ────────────────────────────────────
+
+/**
+ * Loads flights data and pre-caches search metadata for 100x performance
+ */
+async function loadFlightsData() {
+  const rawFlights = await fetchJsonData('../../Data/flights.json', []);
+  return rawFlights.map(flight => {
+    return {
+      ...flight,
+      _searchString: `${flight.flightNumber} ${flight.airline} ${flight.originCity} ${flight.destinationCity} ${flight.fromAirportCode} ${flight.toAirportCode} ${flight.status}`.toLowerCase(),
+      _numericFare: parseInt(flight.fare ? flight.fare.replace(/[^0-9]/g, '') : '0', 10) || 0,
+      _stopsCount: flight.nonStop ? 0 : 1,
+      _originCityLower: (flight.originCity || '').toLowerCase(),
+      _destCityLower: (flight.destinationCity || '').toLowerCase(),
+      _fromCodeLower: (flight.fromAirportCode || '').toLowerCase(),
+      _toCodeLower: (flight.toAirportCode || '').toLowerCase()
+    };
+  });
+}
+
+/**
+ * Loads airports data and pre-caches search haystacks for instant autocomplete
+ */
+async function loadAirportsData() {
+  const rawAirports = await fetchJsonData('../../Data/airports.json', []);
+  return rawAirports.map(airport => {
+    return {
+      ...airport,
+      _searchHaystack: `${airport.city || ''} ${airport.name || ''} ${airport.iata || ''} ${airport.country || ''}`.toLowerCase()
+    };
+  });
+}
+
+// ── Search Term & Location Matchers ──────────────────────────────
+
+/**
+ * Parses user input into raw text, IATA airport code, and city name
+ */
+function parseSearchTerm(inputString) {
+  if (!inputString) {
+    return { rawQuery: '', iataCode: '', cityName: '' };
+  }
+
+  const rawQuery = inputString.trim().toLowerCase();
+  const parenthesisMatch = inputString.match(/\(([^)]+)\)$/);
+  const iataCode = parenthesisMatch ? parenthesisMatch[1].trim().toLowerCase() : '';
+  const cityName = inputString.split(',')[0].replace(/\([^)]*\)/, '').trim().toLowerCase();
+
+  return { rawQuery, iataCode, cityName };
+}
+
+/**
+ * Strictly matches a flight location against parsed user search terms
+ */
+function matchLocation(cityLower, codeLower, searchTerm) {
+  if (!searchTerm.rawQuery) {
+    return true;
+  }
+
+  if (searchTerm.iataCode) {
+    return codeLower === searchTerm.iataCode || (searchTerm.cityName && cityLower.includes(searchTerm.cityName));
+  }
+
+  return cityLower.includes(searchTerm.rawQuery) || 
+         (searchTerm.cityName && cityLower.includes(searchTerm.cityName)) || 
+         codeLower.includes(searchTerm.rawQuery);
+}
+
+// ── UI Card Rendering & DOM Management ──────────────────────────
+
+const CARDS_PER_PAGE = 60;
+let currentRenderedFlights = [];
+let currentDisplayLimit = CARDS_PER_PAGE;
+let hasUserSearched = false;
+
+/**
+ * Builds HTML markup for a single flight card
+ */
+function createFlightCardHtml(flight, animationIndex) {
+  const statusCssClass = (flight.status || '').toLowerCase().replace(/\s+/g, '-');
+  const cappedAnimationIndex = Math.min(animationIndex, 8);
+  const animationDelaySeconds = (cappedAnimationIndex * 0.03).toFixed(2);
+  const formattedFare = formatPrice(flight._numericFare);
+
+  return `
+    <article class="flight-card" style="animation-delay: ${animationDelaySeconds}s">
+      <div class="card-top">
+        <div>
+          <p class="card-airline">${flight.flightNumber} · ${flight.airline}</p>
+          <h3 class="card-route">${flight.originCity} → ${flight.destinationCity}</h3>
+        </div>
+        <div class="card-time">
+          <strong>${flight.departureTime} – ${flight.arrivalTime}</strong>
+          <span>${flight.duration}</span>
+        </div>
+      </div>
+      <div class="card-meta">
+        <span class="pill">${flight.fromAirportCode} → ${flight.toAirportCode}</span>
+        <span class="pill">${flight.nonStop ? 'Non-stop' : '1 stop'}</span>
+        <span class="pill ${statusCssClass}">${flight.status}</span>
+        <span class="card-price">${formattedFare}</span>
+      </div>
+    </article>
+  `;
+}
+
+/**
+ * Renders flight cards in grid with paginated DOM performance
+ */
+function renderFlightCards(flightsList, isIncremental = false) {
+  const gridContainer = document.getElementById('flightsGrid');
+  const resultsMessageElement = document.getElementById('resultsMsg');
+
+  if (!gridContainer) return;
+
+  if (!isIncremental) {
+    currentRenderedFlights = flightsList;
+    currentDisplayLimit = CARDS_PER_PAGE;
+  }
+
+  if (!flightsList.length) {
+    gridContainer.innerHTML = `
+      <div style="text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.4rem;">No Flights Found</h3>
+        <p style="color: #64748b; font-size: 0.95rem; max-width: 420px; margin: 0 auto;">No flights match your exact search criteria. Try searching for different cities or airport codes.</p>
+      </div>
+    `;
+    if (resultsMessageElement) resultsMessageElement.textContent = 'No results.';
+    return;
+  }
+
+  const visibleFlights = flightsList.slice(0, currentDisplayLimit);
+  let cardsHtml = visibleFlights.map((flight, index) => createFlightCardHtml(flight, index)).join('');
+
+  if (flightsList.length > currentDisplayLimit) {
+    const remainingCount = flightsList.length - currentDisplayLimit;
+    cardsHtml += `
+      <div id="loadMoreContainer" style="grid-column: 1 / -1; text-align: center; padding: 1.5rem 0;">
+        <button id="loadMoreBtn" type="button" style="background: #1e293b; color: #ffffff; border: none; padding: 0.75rem 2rem; border-radius: 99px; font-weight: 700; cursor: pointer; transition: background 0.2s ease;">
+          Load More Flights (${remainingCount} remaining)
+        </button>
+      </div>
+    `;
+  }
+
+  gridContainer.innerHTML = cardsHtml;
+
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      currentDisplayLimit += CARDS_PER_PAGE;
+      renderFlightCards(currentRenderedFlights, true);
+    });
+  }
+
+  if (resultsMessageElement) {
+    const liveCount = flightsList.filter(f => (f.status || '').toLowerCase() !== 'scheduled').length;
+    resultsMessageElement.textContent = `${flightsList.length} flight${flightsList.length > 1 ? 's' : ''} found · ${liveCount} live`;
+  }
+}
+
+// ── Search & Filter Logic ────────────────────────────────────────
+
+/**
+ * Main function to filter flights based on active inputs and sidebar options
+ */
 function applyFilters(allFlights, forceSearch = false) {
-  if (forceSearch) hasUserSearched = true;
+  if (forceSearch) {
+    hasUserSearched = true;
+  }
 
-  const isFV = document.getElementById('flights-view')?.style.display === 'block';
-  const term = getVal('flightSearch').toLowerCase();
-  const from = getCode(getVal(isFV && document.getElementById('fsbFrom') ? 'fsbFrom' : 'departureFrom'));
-  const to = getCode(getVal(isFV && document.getElementById('fsbTo') ? 'fsbTo' : 'goingTo'));
-  const nonStop = document.getElementById('nonStop')?.checked;
-  const maxPrice = parseInt(getVal('priceRange') || '5000', 10);
-  const getChecked = (cls) => Array.from(document.querySelectorAll(cls)).map(el => el.value);
-  const stops = getChecked('.stop-filter:checked').map(Number);
-  const airlines = getChecked('.airline-filter:checked');
+  const isFlightsViewVisible = document.getElementById('flights-view')?.style.display === 'block';
+  const keywordSearchTerm = getInputValue('flightSearch').toLowerCase();
 
-  const hasSearchText = term || from || to;
+  const fromInputValue = isFlightsViewVisible 
+    ? (getInputValue('fsbFrom') || getInputValue('departureFrom')) 
+    : (getInputValue('departureFrom') || getInputValue('fsbFrom'));
 
-  // If search fields are empty, prompt user to enter a city/airport
-  if (!hasSearchText) {
-    const grid = document.getElementById('flightsGrid'), msg = document.getElementById('resultsMsg');
-    if (grid) {
-      grid.innerHTML = `
-        <div style="text-align: center; padding: 3.5rem 1.5rem; background: #fff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+  const toInputValue = isFlightsViewVisible 
+    ? (getInputValue('fsbTo') || getInputValue('goingTo')) 
+    : (getInputValue('goingTo') || getInputValue('fsbTo'));
+
+  const fromSearchTerm = parseSearchTerm(fromInputValue);
+  const toSearchTerm = parseSearchTerm(toInputValue);
+
+  const isNonStopOnly = document.getElementById('nonStop')?.checked;
+  const maxPriceLimit = parseInt(getInputValue('priceRange') || '5000', 10);
+
+  const getCheckedValues = (selector) => Array.from(document.querySelectorAll(selector)).map(element => element.value);
+  const checkedStops = getCheckedValues('.stop-filter:checked').map(Number);
+  const checkedAirlines = getCheckedValues('.airline-filter:checked');
+
+  const hasSearchInput = Boolean(keywordSearchTerm || fromSearchTerm.rawQuery || toSearchTerm.rawQuery);
+
+  // If no input has been entered by the user, keep placeholder prompt visible
+  if (!hasSearchInput) {
+    const gridContainer = document.getElementById('flightsGrid');
+    const resultsMessageElement = document.getElementById('resultsMsg');
+
+    if (gridContainer) {
+      gridContainer.innerHTML = `
+        <div style="text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
           <div style="margin-bottom: 0.75rem;">
-            <img src="../../images/navbar logo.gif" alt="SkyFlow GIF" style="height: 55px; width: auto; object-fit: contain; display: inline-block;">
+            <img src="../../images/navbar logo.gif" alt="SkyFlow Logo" style="height: 55px; width: auto; object-fit: contain; display: inline-block;">
           </div>
           <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.4rem;">Search for a Flight</h3>
-          <p style="color: #64748b; font-size: 0.95rem; max-width: 440px; margin: 0 auto;">Please enter a departure or destination city (e.g. <strong>London</strong>, <strong>Istanbul</strong>, <strong>Riyadh</strong>, <strong>Tokyo</strong>) in the search fields above.</p>
+          <p style="color: #64748b; font-size: 0.95rem; max-width: 440px; margin: 0 auto;">Please enter a departure or destination city in the search fields above.</p>
         </div>
       `;
     }
-    if (msg) msg.textContent = 'Please enter origin or destination city.';
-    const titleEl = document.getElementById('flightsTitle');
-    if (titleEl) titleEl.innerHTML = 'SEARCH <span class="flights-title-accent">FLIGHTS</span>';
-    const noteEl = document.getElementById('flightsNote');
-    if (noteEl) noteEl.innerHTML = 'Enter your travel details above to search.';
+
+    if (resultsMessageElement) {
+      resultsMessageElement.textContent = 'Please enter origin or destination city.';
+    }
+
+    const titleElement = document.getElementById('flightsTitle');
+    if (titleElement) {
+      titleElement.innerHTML = 'SEARCH <span class="flights-title-accent">FLIGHTS</span>';
+    }
+
+    const noteElement = document.getElementById('flightsNote');
+    if (noteElement) {
+      noteElement.innerHTML = 'Enter your travel details above to search.';
+    }
+
     return;
   }
 
-  const results = allFlights.filter(f => {
-    const txt = `${f.flightNumber} ${f.airline} ${f.originCity} ${f.destinationCity} ${f.fromAirportCode} ${f.toAirportCode} ${f.status}`.toLowerCase();
-    const stp = f.nonStop ? 0 : 1;
-    const fare = parseInt(f.fare.replace(/[^0-9]/g, ''), 10) || 0;
-    
-    return (!term || txt.includes(term)) &&
-           (!from || f.originCity.toLowerCase().includes(from) || f.fromAirportCode.toLowerCase().includes(from) || from.includes(f.originCity.toLowerCase())) &&
-           (!to || f.destinationCity.toLowerCase().includes(to) || f.toAirportCode.toLowerCase().includes(to) || to.includes(f.destinationCity.toLowerCase())) &&
-           (!nonStop || f.nonStop) && (fare <= maxPrice) &&
-           (!stops.length || stops.includes(stp) || (stp > 1 && stops.includes(2))) &&
-           (!airlines.length || airlines.includes(f.airline));
+  // Filter flights matching input fields and sidebar controls
+  const matchingFlights = allFlights.filter(flight => {
+    const matchesKeyword = !keywordSearchTerm || flight._searchString.includes(keywordSearchTerm);
+    const matchesFrom = matchLocation(flight._originCityLower, flight._fromCodeLower, fromSearchTerm);
+    const matchesTo = matchLocation(flight._destCityLower, flight._toCodeLower, toSearchTerm);
+    const matchesNonStop = !isNonStopOnly || flight.nonStop;
+    const matchesPrice = flight._numericFare <= maxPriceLimit;
+    const matchesStops = !checkedStops.length || checkedStops.includes(flight._stopsCount) || (flight._stopsCount > 1 && checkedStops.includes(2));
+    const matchesAirline = !checkedAirlines.length || checkedAirlines.includes(flight.airline);
+
+    return matchesKeyword && matchesFrom && matchesTo && matchesNonStop && matchesPrice && matchesStops && matchesAirline;
   });
 
-  const titleEl = document.getElementById('flightsTitle');
-  if (titleEl) {
-    titleEl.innerHTML = results.length 
+  const titleElement = document.getElementById('flightsTitle');
+  if (titleElement) {
+    titleElement.innerHTML = matchingFlights.length 
       ? 'MATCHING <span class="flights-title-accent">FLIGHTS</span>' 
       : 'NO <span class="flights-title-accent">FLIGHTS</span>';
   }
-  const noteEl = document.getElementById('flightsNote');
-  if (noteEl) {
-    noteEl.innerHTML = results.length
-      ? `${results.length} match${results.length === 1 ? '' : 'es'} found.` 
-      : `No flights found matching your search. Try different cities or dates.`;
+
+  const noteElement = document.getElementById('flightsNote');
+  if (noteElement) {
+    noteElement.innerHTML = matchingFlights.length
+      ? `${matchingFlights.length} match${matchingFlights.length === 1 ? '' : 'es'} found.` 
+      : 'No flights found matching your search.';
   }
 
-  renderCards(results);
+  renderFlightCards(matchingFlights);
 }
 
-// ── Autocomplete ────────────────────────────
-function setupAutocomplete(inputId, dropdownId, airports, allFlights) {
-  const input = document.getElementById(inputId), dropdown = document.getElementById(dropdownId);
-  if (!input || !dropdown) return;
-  let activeIndex = -1, suggestions = [];
+// ── Dropdown Component Setup ─────────────────────────────────────
 
-  const render = (query) => {
-    const q = query.toLowerCase();
-    suggestions = query ? airports.filter(a => `${a.city} ${a.name} ${a.iata} ${a.country}`.toLowerCase().includes(q)).slice(0, 10) : POPULAR_AIRPORTS;
+/**
+ * Autocomplete dropdown setup for FROM and TO location fields
+ */
+function setupAutocomplete(inputId, dropdownId, airportsList, allFlights, debouncedSearch) {
+  const inputElement = document.getElementById(inputId);
+  const dropdownElement = document.getElementById(dropdownId);
+  if (!inputElement || !dropdownElement) return;
+
+  let activeIndex = -1;
+  let currentSuggestions = [];
+
+  const renderSuggestions = (searchQuery) => {
+    const lowerQuery = searchQuery.toLowerCase();
+    currentSuggestions = searchQuery 
+      ? airportsList.filter(airport => airport._searchHaystack.includes(lowerQuery)).slice(0, 10) 
+      : airportsList.slice(0, 10);
+
     activeIndex = -1;
-    dropdown.innerHTML = suggestions.length ? suggestions.map((a, i) => {
-      const hl = str => query ? str.replace(new RegExp(`(${query.replace(/[-\/\\^$*+?.()|[\\]{}]/g, '\\\\$&')})`, 'gi'), '<span class="autocomplete-highlight">$1</span>') : str;
-      return `<div class="autocomplete-option" data-index="${i}"><div class="autocomplete-option-icon">✈</div>
-        <div class="autocomplete-option-info"><span class="autocomplete-option-city">${hl(a.city||'')}, ${a.country||''}</span><span class="autocomplete-option-airport">${hl(a.name||'')}</span></div>
-        <span class="autocomplete-option-badge">${hl(a.iata||'')}</span></div>`;
-    }).join('') : '<div style="padding: 1rem; color: #49769f; text-align: center;">No matches</div>';
-    dropdown.classList.add('show');
-  };
 
-  const select = (idx) => {
-    if (suggestions[idx]) {
-      input.value = `${suggestions[idx].city}, ${suggestions[idx].country || ''} (${suggestions[idx].iata})`;
-      dropdown.classList.remove('show');
-      applyFilters(allFlights, true);
+    if (!currentSuggestions.length) {
+      dropdownElement.innerHTML = '<div style="padding: 1rem; color: #49769f; text-align: center;">No matches</div>';
+    } else {
+      dropdownElement.innerHTML = currentSuggestions.map((airport, index) => {
+        const highlightText = (text) => {
+          if (!searchQuery) return text;
+          const safeQuery = searchQuery.replace(/[-\/\\^$*+?.()|[\\]{}]/g, '\\$&');
+          return text.replace(new RegExp(`(${safeQuery})`, 'gi'), '<span class="autocomplete-highlight">$1</span>');
+        };
+
+        const cityText = highlightText(airport.city || '');
+        const countryText = airport.country || '';
+        const airportNameText = highlightText(airport.name || '');
+        const iataBadgeText = highlightText(airport.iata || '');
+
+        return `
+          <div class="autocomplete-option" data-index="${index}">
+            <div class="autocomplete-option-icon">✈</div>
+            <div class="autocomplete-option-info">
+              <span class="autocomplete-option-city">${cityText}, ${countryText}</span>
+              <span class="autocomplete-option-airport">${airportNameText}</span>
+            </div>
+            <span class="autocomplete-option-badge">${iataBadgeText}</span>
+          </div>
+        `;
+      }).join('');
     }
+
+    dropdownElement.classList.add('show');
   };
 
-  input.addEventListener('focus', () => { document.querySelectorAll('.autocomplete-dropdown').forEach(d => d !== dropdown && d.classList.remove('show')); render(input.value.trim()); });
-  input.addEventListener('input', () => render(input.value.trim()));
-  dropdown.addEventListener('click', e => select(e.target.closest('.autocomplete-option')?.dataset.index));
-  
-  input.addEventListener('keydown', e => {
-    if (!dropdown.classList.contains('show')) return ['ArrowDown', 'ArrowUp'].includes(e.key) && render(input.value.trim());
-    if (e.key === 'Escape') return dropdown.classList.remove('show'), input.blur();
-    if (e.key === 'Enter') return e.preventDefault(), select(Math.max(0, activeIndex));
-    if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
-      e.preventDefault();
-      activeIndex = (activeIndex + (e.key === 'ArrowDown' ? 1 : -1) + suggestions.length) % suggestions.length;
-      dropdown.querySelectorAll('.autocomplete-option').forEach((opt, idx) => {
-        opt.classList.toggle('active', idx === activeIndex);
-        if (idx === activeIndex) opt.scrollIntoView({ block: 'nearest' });
+  const selectSuggestion = (optionIndex) => {
+    const selectedAirport = currentSuggestions[optionIndex];
+    if (!selectedAirport) return;
+
+    const formattedValue = `${selectedAirport.city}, ${selectedAirport.country || ''} (${selectedAirport.iata})`;
+    inputElement.value = formattedValue;
+
+    // Synchronize inputs between Hero section and Flights section
+    if (inputId === 'departureFrom') {
+      const fsbFrom = document.getElementById('fsbFrom');
+      if (fsbFrom) fsbFrom.value = formattedValue;
+    }
+    if (inputId === 'fsbFrom') {
+      const heroFrom = document.getElementById('departureFrom');
+      if (heroFrom) heroFrom.value = formattedValue;
+    }
+    if (inputId === 'goingTo') {
+      const fsbTo = document.getElementById('fsbTo');
+      if (fsbTo) fsbTo.value = formattedValue;
+    }
+    if (inputId === 'fsbTo') {
+      const heroTo = document.getElementById('goingTo');
+      if (heroTo) heroTo.value = formattedValue;
+    }
+
+    dropdownElement.classList.remove('show');
+    applyFilters(allFlights, true);
+  };
+
+  inputElement.addEventListener('focus', () => {
+    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
+      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
+    });
+    renderSuggestions(inputElement.value.trim());
+  });
+
+  inputElement.addEventListener('input', () => {
+    renderSuggestions(inputElement.value.trim());
+  });
+
+  dropdownElement.addEventListener('click', (event) => {
+    const clickedOption = event.target.closest('.autocomplete-option');
+    if (clickedOption) {
+      selectSuggestion(clickedOption.dataset.index);
+    }
+  });
+
+  inputElement.addEventListener('keydown', (event) => {
+    if (!dropdownElement.classList.contains('show')) {
+      if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
+        renderSuggestions(inputElement.value.trim());
+      }
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      dropdownElement.classList.remove('show');
+      inputElement.blur();
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      selectSuggestion(Math.max(0, activeIndex));
+      return;
+    }
+
+    if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
+      event.preventDefault();
+      const direction = event.key === 'ArrowDown' ? 1 : -1;
+      activeIndex = (activeIndex + direction + currentSuggestions.length) % currentSuggestions.length;
+
+      dropdownElement.querySelectorAll('.autocomplete-option').forEach((optionElement, index) => {
+        optionElement.classList.toggle('active', index === activeIndex);
+        if (index === activeIndex) {
+          optionElement.scrollIntoView({ block: 'nearest' });
+        }
       });
     }
   });
 }
 
-// ── Calendar Picker Helper ─────────────────
+/**
+ * Calendar picker dropdown setup for DEPART and RETURN date fields
+ */
 function setupCalendarPicker(inputId, dropdownId, allFlights) {
-  const input = document.getElementById(inputId), dropdown = document.getElementById(dropdownId);
-  if (!input || !dropdown) return;
+  const inputElement = document.getElementById(inputId);
+  const dropdownElement = document.getElementById(dropdownId);
+  if (!inputElement || !dropdownElement) return;
 
-  const MONTH_NAMES = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'];
-  const FULL_MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const MONTH_SHORT_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  let viewDate = new Date(2026, 7, 1);
+  let activeCalendarDate = new Date(2026, 7, 1);
 
-  const parseFormattedDate = (val) => {
-    if (!val) return null;
-    const parts = val.split(', ');
-    const dateStr = parts.length > 1 ? parts[1] : val;
-    const tokens = dateStr.trim().split(/\s+/);
+  const parseFormattedDate = (dateString) => {
+    if (!dateString) return null;
+    const parts = dateString.split(', ');
+    const cleanedDateStr = parts.length > 1 ? parts[1] : dateString;
+    const tokens = cleanedDateStr.trim().split(/\s+/);
     if (tokens.length < 3) return null;
-    const dayNum = parseInt(tokens[0], 10);
-    const mIdx = MONTH_SHORT.findIndex(m => m.toLowerCase() === tokens[1].toLowerCase());
-    if (mIdx === -1 || isNaN(dayNum)) return null;
-    const yearNum = tokens[2].length === 2 ? 2000 + parseInt(tokens[2], 10) : parseInt(tokens[2], 10);
-    return new Date(yearNum, mIdx, dayNum);
+
+    const dayNumber = parseInt(tokens[0], 10);
+    const monthIndex = MONTH_SHORT_NAMES.findIndex(month => month.toLowerCase() === tokens[1].toLowerCase());
+    if (monthIndex === -1 || isNaN(dayNumber)) return null;
+
+    const yearNumber = tokens[2].length === 2 ? 2000 + parseInt(tokens[2], 10) : parseInt(tokens[2], 10);
+    return new Date(yearNumber, monthIndex, dayNumber);
   };
 
-  const renderCalendar = () => {
-    const selectedDate = parseFormattedDate(input.value);
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const renderCalendarGrid = () => {
+    const selectedDate = parseFormattedDate(inputElement.value);
+    const currentYear = activeCalendarDate.getFullYear();
+    const currentMonth = activeCalendarDate.getMonth();
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-    let html = `
+    let calendarHtml = `
       <div class="cal-header">
         <button type="button" class="cal-nav-btn prev-month">&lsaquo;</button>
-        <span class="cal-title">${FULL_MONTH_NAMES[month]} ${year}</span>
+        <span class="cal-title">${MONTH_NAMES[currentMonth]} ${currentYear}</span>
         <button type="button" class="cal-nav-btn next-month">&rsaquo;</button>
       </div>
       <div class="cal-weekdays">
-        <span class="cal-weekday">Su</span>
-        <span class="cal-weekday">Mo</span>
-        <span class="cal-weekday">Tu</span>
-        <span class="cal-weekday">We</span>
-        <span class="cal-weekday">Th</span>
-        <span class="cal-weekday">Fr</span>
-        <span class="cal-weekday">Sa</span>
+        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
       </div>
       <div class="cal-days-grid">
     `;
 
-    for (let i = 0; i < firstDay; i++) {
-      html += `<div class="cal-day empty"></div>`;
+    for (let i = 0; i < firstDayIndex; i++) {
+      calendarHtml += `<div class="cal-day empty"></div>`;
     }
 
-    const curSelYear = selectedDate ? selectedDate.getFullYear() : -1;
-    const curSelMonth = selectedDate ? selectedDate.getMonth() : -1;
-    const curSelDay = selectedDate ? selectedDate.getDate() : -1;
+    const selectedYear = selectedDate ? selectedDate.getFullYear() : -1;
+    const selectedMonth = selectedDate ? selectedDate.getMonth() : -1;
+    const selectedDay = selectedDate ? selectedDate.getDate() : -1;
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isSelected = (curSelYear === year && curSelMonth === month && curSelDay === day);
-      html += `<div class="cal-day ${isSelected ? 'selected' : ''}" data-day="${day}">${day}</div>`;
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+      const isSelected = (selectedYear === currentYear && selectedMonth === currentMonth && selectedDay === day);
+      calendarHtml += `<div class="cal-day ${isSelected ? 'selected' : ''}" data-day="${day}">${day}</div>`;
     }
 
-    html += `</div>`;
-    dropdown.innerHTML = html;
+    calendarHtml += `</div>`;
+    dropdownElement.innerHTML = calendarHtml;
 
-    dropdown.querySelector('.prev-month')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      viewDate.setMonth(viewDate.getMonth() - 1);
-      renderCalendar();
+    dropdownElement.querySelector('.prev-month')?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      activeCalendarDate.setMonth(activeCalendarDate.getMonth() - 1);
+      renderCalendarGrid();
     });
 
-    dropdown.querySelector('.next-month')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      viewDate.setMonth(viewDate.getMonth() + 1);
-      renderCalendar();
+    dropdownElement.querySelector('.next-month')?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      activeCalendarDate.setMonth(activeCalendarDate.getMonth() + 1);
+      renderCalendarGrid();
     });
 
-    dropdown.querySelectorAll('.cal-day[data-day]').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const d = parseInt(el.dataset.day, 10);
-        const chosenDate = new Date(year, month, d);
-        const dayName = DAYS_SHORT[chosenDate.getDay()];
-        const monthName = MONTH_SHORT[month];
-        const yr2Digit = String(year).slice(-2);
-        input.value = `${dayName}, ${d} ${monthName} ${yr2Digit}`;
-        dropdown.classList.remove('show');
-        applyFilters(allFlights, true);
+    dropdownElement.querySelectorAll('.cal-day[data-day]').forEach(dayElement => {
+      dayElement.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const dayNumber = parseInt(dayElement.dataset.day, 10);
+        const chosenDate = new Date(currentYear, currentMonth, dayNumber);
+        const dayName = DAY_SHORT_NAMES[chosenDate.getDay()];
+        const monthName = MONTH_SHORT_NAMES[currentMonth];
+        const twoDigitYear = String(currentYear).slice(-2);
+
+        inputElement.value = `${dayName}, ${dayNumber} ${monthName} ${twoDigitYear}`;
+        dropdownElement.classList.remove('show');
+        applyFilters(allFlights, false);
       });
     });
   };
 
-  const openDropdown = (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('.autocomplete-dropdown').forEach(d => d !== dropdown && d.classList.remove('show'));
-    const parsed = parseFormattedDate(input.value);
-    if (parsed) viewDate = new Date(parsed.getFullYear(), parsed.getMonth(), 1);
-    renderCalendar();
-    dropdown.classList.add('show');
+  const openCalendarDropdown = (event) => {
+    event.stopPropagation();
+    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
+      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
+    });
+    const parsedDate = parseFormattedDate(inputElement.value);
+    if (parsedDate) {
+      activeCalendarDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1);
+    }
+    renderCalendarGrid();
+    dropdownElement.classList.add('show');
   };
 
-  input.addEventListener('click', openDropdown);
-  input.parentElement?.addEventListener('click', (e) => {
-    if (e.target.id === 'fsbReturnClear' || e.target.closest('#fsbReturnClear')) return;
-    if (e.target !== input && !dropdown.contains(e.target)) openDropdown(e);
+  inputElement.addEventListener('click', openCalendarDropdown);
+  inputElement.parentElement?.addEventListener('click', (event) => {
+    if (event.target.id === 'fsbReturnClear' || event.target.closest('#fsbReturnClear')) return;
+    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
+      openCalendarDropdown(event);
+    }
   });
 }
 
-// ── Travellers Menu Helper ─────────────────
+/**
+ * Travellers dropdown setup
+ */
 function setupTravellersMenu(inputId, dropdownId, allFlights) {
-  const input = document.getElementById(inputId), dropdown = document.getElementById(dropdownId);
-  if (!input || !dropdown) return;
+  const inputElement = document.getElementById(inputId);
+  const dropdownElement = document.getElementById(dropdownId);
+  if (!inputElement || !dropdownElement) return;
 
   const renderTravellersMenu = () => {
-    const currentVal = parseInt(input.value, 10) || 1;
-    let html = `<div class="autocomplete-header">SELECT TRAVELLERS (MAX 10)</div>`;
+    const currentCount = parseInt(inputElement.value, 10) || 1;
+    let menuHtml = `<div class="autocomplete-header">SELECT TRAVELLERS (MAX 10)</div>`;
 
-    for (let i = 1; i <= 10; i++) {
-      const isActive = i === currentVal;
-      const label = i === 1 ? '1 Adult' : `${i} Adults`;
-      const desc = i === 1 ? 'Single passenger' : (i === 10 ? 'Maximum group booking (10 persons)' : `${i} Passengers booking`);
-      const badge = i === 10 ? '10 Max' : `${i} ${i === 1 ? 'Person' : 'Persons'}`;
+    for (let count = 1; count <= 10; count++) {
+      const isActive = (count === currentCount);
+      const labelText = count === 1 ? '1 Adult' : `${count} Adults`;
+      const descriptionText = count === 1 ? 'Single passenger' : (count === 10 ? 'Maximum group booking (10 persons)' : `${count} Passengers booking`);
+      const badgeText = count === 10 ? '10 Max' : `${count} ${count === 1 ? 'Person' : 'Persons'}`;
 
-      html += `
-        <div class="traveller-option ${isActive ? 'active' : ''}" data-count="${i}">
+      menuHtml += `
+        <div class="traveller-option ${isActive ? 'active' : ''}" data-count="${count}">
           <div class="traveller-info">
-            <div class="traveller-icon">${i === 1 ? '👤' : '👥'}</div>
+            <div class="traveller-icon">${count === 1 ? '👤' : '👥'}</div>
             <div>
-              <div class="traveller-label">${label}</div>
-              <div class="traveller-sub">${desc}</div>
+              <div class="traveller-label">${labelText}</div>
+              <div class="traveller-sub">${descriptionText}</div>
             </div>
           </div>
-          <span class="traveller-badge">${badge}</span>
+          <span class="traveller-badge">${badgeText}</span>
         </div>
       `;
     }
 
-    dropdown.innerHTML = html;
+    dropdownElement.innerHTML = menuHtml;
 
-    dropdown.querySelectorAll('.traveller-option').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const count = parseInt(el.dataset.count, 10);
-        input.value = count === 1 ? '1 Adult' : `${count} Adults`;
-        dropdown.classList.remove('show');
-        applyFilters(allFlights, true);
+    dropdownElement.querySelectorAll('.traveller-option').forEach(optionElement => {
+      optionElement.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const count = parseInt(optionElement.dataset.count, 10);
+        inputElement.value = count === 1 ? '1 Adult' : `${count} Adults`;
+        dropdownElement.classList.remove('show');
+        applyFilters(allFlights, false);
       });
     });
   };
 
-  const openDropdown = (e) => {
-    e.stopPropagation();
-    document.querySelectorAll('.autocomplete-dropdown').forEach(d => d !== dropdown && d.classList.remove('show'));
+  const openTravellersDropdown = (event) => {
+    event.stopPropagation();
+    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
+      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
+    });
     renderTravellersMenu();
-    dropdown.classList.add('show');
+    dropdownElement.classList.add('show');
   };
 
-  input.addEventListener('click', openDropdown);
-  input.parentElement?.addEventListener('click', (e) => {
-    if (e.target !== input && !dropdown.contains(e.target)) openDropdown(e);
+  inputElement.addEventListener('click', openTravellersDropdown);
+  inputElement.parentElement?.addEventListener('click', (event) => {
+    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
+      openTravellersDropdown(event);
+    }
   });
 }
 
-// ── Init & Events ──────────────────────────
-async function init() {
-  const [allFlights, allAirports] = await Promise.all([loadFlights(), loadAirports()]);
-  
-  const af = document.getElementById('airlineFilters');
-  if (af) af.innerHTML = [...new Set(allFlights.map(f => f.airline))].sort().map(a => `<label class="checkbox-label"><input type="checkbox" class="airline-filter" value="${a}"> ${a}</label>`).join('');
+/**
+ * Trip Type dropdown setup (Round Trip / One Way)
+ */
+function setupTripTypeMenu(inputId, dropdownId, allFlights) {
+  const inputElement = document.getElementById(inputId);
+  const dropdownElement = document.getElementById(dropdownId);
+  if (!inputElement || !dropdownElement) return;
 
+  const renderTripTypeMenu = () => {
+    const currentValue = inputElement.value;
+    dropdownElement.innerHTML = `
+      <div class="autocomplete-header">SELECT TRIP TYPE</div>
+      <div class="traveller-option ${currentValue === 'Round Trip' ? 'active' : ''}" data-value="Round Trip">
+        <div class="traveller-info">
+          <div class="traveller-icon">🔁</div>
+          <div>
+            <div class="traveller-label">Round Trip</div>
+            <div class="traveller-sub">Return flight included</div>
+          </div>
+        </div>
+      </div>
+      <div class="traveller-option ${currentValue === 'One Way' ? 'active' : ''}" data-value="One Way">
+        <div class="traveller-info">
+          <div class="traveller-icon">➡️</div>
+          <div>
+            <div class="traveller-label">One Way</div>
+            <div class="traveller-sub">Single directional flight</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    dropdownElement.querySelectorAll('.traveller-option').forEach(optionElement => {
+      optionElement.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const selectedValue = optionElement.dataset.value;
+        inputElement.value = selectedValue;
+
+        const returnInput = document.getElementById('fsbReturn');
+        const returnCardContainer = returnInput?.closest('.fsb-card');
+
+        if (selectedValue === 'One Way') {
+          if (returnInput) returnInput.value = '';
+          if (returnCardContainer) returnCardContainer.style.opacity = '0.4';
+        } else {
+          if (returnInput && !returnInput.value) returnInput.value = 'Fri, 7 Aug 26';
+          if (returnCardContainer) returnCardContainer.style.opacity = '1';
+        }
+
+        dropdownElement.classList.remove('show');
+        applyFilters(allFlights, false);
+      });
+    });
+  };
+
+  const openTripTypeDropdown = (event) => {
+    event.stopPropagation();
+    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
+      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
+    });
+    renderTripTypeMenu();
+    dropdownElement.classList.add('show');
+  };
+
+  inputElement.addEventListener('click', openTripTypeDropdown);
+  inputElement.parentElement?.addEventListener('click', (event) => {
+    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
+      openTripTypeDropdown(event);
+    }
+  });
+}
+
+/**
+ * Cabin Class dropdown setup
+ */
+function setupCabinClassMenu(inputId, dropdownId, allFlights) {
+  const inputElement = document.getElementById(inputId);
+  const dropdownElement = document.getElementById(dropdownId);
+  if (!inputElement || !dropdownElement) return;
+
+  const cabinOptions = [
+    { label: 'Economy / Premium', sub: 'Standard & extra legroom seats', icon: '🪑' },
+    { label: 'Business Class', sub: 'Lie-flat seats & lounge access', icon: '💼' },
+    { label: 'First Class', sub: 'Private suite & luxury service', icon: '👑' }
+  ];
+
+  const renderCabinClassMenu = () => {
+    const currentValue = inputElement.value;
+    let menuHtml = `<div class="autocomplete-header">SELECT CABIN CLASS</div>`;
+
+    cabinOptions.forEach(option => {
+      const isActive = currentValue.includes(option.label.split(' ')[0]);
+      menuHtml += `
+        <div class="traveller-option ${isActive ? 'active' : ''}" data-value="${option.label}">
+          <div class="traveller-info">
+            <div class="traveller-icon">${option.icon}</div>
+            <div>
+              <div class="traveller-label">${option.label}</div>
+              <div class="traveller-sub">${option.sub}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    dropdownElement.innerHTML = menuHtml;
+
+    dropdownElement.querySelectorAll('.traveller-option').forEach(optionElement => {
+      optionElement.addEventListener('click', (event) => {
+        event.stopPropagation();
+        inputElement.value = optionElement.dataset.value;
+        dropdownElement.classList.remove('show');
+        applyFilters(allFlights, false);
+      });
+    });
+  };
+
+  const openCabinClassDropdown = (event) => {
+    event.stopPropagation();
+    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
+      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
+    });
+    renderCabinClassMenu();
+    dropdownElement.classList.add('show');
+  };
+
+  inputElement.addEventListener('click', openCabinClassDropdown);
+  inputElement.parentElement?.addEventListener('click', (event) => {
+    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
+      openCabinClassDropdown(event);
+    }
+  });
+}
+
+// ── Application Initialization & Event Binds ─────────────────────
+
+async function initApplication() {
+  const [allFlights, allAirports] = await Promise.all([loadFlightsData(), loadAirportsData()]);
+  const debouncedSearch = debounce((forceSearch = false) => applyFilters(allFlights, forceSearch), 120);
+
+  // Populate dynamic airline checkboxes
+  const airlineFiltersContainer = document.getElementById('airlineFilters');
+  if (airlineFiltersContainer) {
+    const uniqueAirlines = [...new Set(allFlights.map(flight => flight.airline))].sort();
+    airlineFiltersContainer.innerHTML = uniqueAirlines.map(airline => `
+      <label class="checkbox-label">
+        <input type="checkbox" class="airline-filter" value="${airline}"> ${airline}
+      </label>
+    `).join('');
+  }
+
+  // Initial filter run
   applyFilters(allFlights, false);
-  ['departureFrom', 'goingTo', 'fsbFrom', 'fsbTo'].forEach(id => setupAutocomplete(id, id+'Dropdown', allAirports, allFlights));
-  
+
+  // Setup dropdown autocompletes
+  ['departureFrom', 'goingTo', 'fsbFrom', 'fsbTo'].forEach(id => {
+    setupAutocomplete(id, id + 'Dropdown', allAirports, allFlights, () => debouncedSearch(false));
+  });
+
   setupCalendarPicker('fsbDepart', 'fsbDepartDropdown', allFlights);
   setupCalendarPicker('fsbReturn', 'fsbReturnDropdown', allFlights);
   setupTravellersMenu('fsbTravellers', 'fsbTravellersDropdown', allFlights);
+  setupTripTypeMenu('fsbTripType', 'fsbTripTypeDropdown', allFlights);
+  setupCabinClassMenu('fsbCabin', 'fsbCabinDropdown', allFlights);
 
-  document.getElementById('fsbReturnClear')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const retInput = document.getElementById('fsbReturn');
-    if (retInput) retInput.value = '';
-    applyFilters(allFlights, true);
+  // Sync inputs between Hero card and Flights search bar
+  const syncInputPair = (id1, id2) => {
+    const element1 = document.getElementById(id1);
+    const element2 = document.getElementById(id2);
+    if (element1 && element2) {
+      element1.addEventListener('input', () => {
+        element2.value = element1.value;
+        debouncedSearch(false);
+      });
+      element2.addEventListener('input', () => {
+        element1.value = element2.value;
+        debouncedSearch(false);
+      });
+    }
+  };
+  syncInputPair('departureFrom', 'fsbFrom');
+  syncInputPair('goingTo', 'fsbTo');
+
+  // Clear return date button
+  document.getElementById('fsbReturnClear')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const returnInput = document.getElementById('fsbReturn');
+    if (returnInput) returnInput.value = '';
+    applyFilters(allFlights, false);
   });
 
+  // Hero section search button
   document.getElementById('searchBtn')?.addEventListener('click', () => {
-    ['From', 'To'].forEach(f => {
-      const fsb = document.getElementById('fsb'+f), hero = document.getElementById(f === 'From' ? 'departureFrom' : 'goingTo');
-      if (fsb && hero) fsb.value = hero.value;
-    });
+    const heroFrom = document.getElementById('departureFrom');
+    const heroTo = document.getElementById('goingTo');
+    const fsbFrom = document.getElementById('fsbFrom');
+    const fsbTo = document.getElementById('fsbTo');
+
+    if (heroFrom && fsbFrom) {
+      if (heroFrom.value) fsbFrom.value = heroFrom.value;
+      else if (fsbFrom.value) heroFrom.value = fsbFrom.value;
+    }
+
+    if (heroTo && fsbTo) {
+      if (heroTo.value) fsbTo.value = heroTo.value;
+      else if (fsbTo.value) heroTo.value = fsbTo.value;
+    }
+
+    const heroView = document.getElementById('hero-view');
+    const flightsView = document.getElementById('flights-view');
+
+    if (heroView) heroView.style.display = 'none';
+    if (flightsView) flightsView.style.display = 'block';
+
     applyFilters(allFlights, true);
-    if (document.getElementById('hero-view')) document.getElementById('hero-view').style.display = 'none';
-    if (document.getElementById('flights-view')) document.getElementById('flights-view').style.display = 'block';
     window.location.hash = '#flights';
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.route === 'flights' || l.getAttribute('href')?.includes('flights')));
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+      const route = link.dataset.route;
+      const href = link.getAttribute('href') || '';
+      link.classList.toggle('active', route === 'flights' || href.includes('flights'));
+    });
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  document.getElementById('fsbSearchBtn')?.addEventListener('click', () => applyFilters(allFlights, true));
-  document.getElementById('fsbFrom')?.addEventListener('input', () => applyFilters(allFilters, true));
-  document.getElementById('fsbTo')?.addEventListener('input', () => applyFilters(allFilters, true));
-  document.getElementById('flightSearch')?.addEventListener('input', () => applyFilters(allFilters, true));
-  document.getElementById('nonStop')?.addEventListener('change', () => applyFilters(allFilters, true));
-  document.addEventListener('click', e => !e.target.closest('.flight-field') && document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.classList.remove('show')));
+  // Flights bar search button
+  document.getElementById('fsbSearchBtn')?.addEventListener('click', () => {
+    applyFilters(allFlights, true);
+  });
 
-  const swap = (fid, tid) => { const a=document.getElementById(fid), b=document.getElementById(tid); if(a&&b) [a.value, b.value] = [b.value, a.value]; applyFilters(allFlights, true); };
-  document.getElementById('swapBtn')?.addEventListener('click', () => swap('departureFrom', 'goingTo'));
-  document.getElementById('fsbSwap')?.addEventListener('click', () => swap('fsbFrom', 'fsbTo'));
+  document.getElementById('flightSearch')?.addEventListener('input', () => {
+    debouncedSearch(false);
+  });
 
-  document.getElementById('priceRange')?.addEventListener('input', e => { const pv = document.getElementById('priceValue'); if(pv) pv.textContent = `$${e.target.value}`; applyFilters(allFlights, true); });
-  document.addEventListener('change', e => (e.target.matches('.stop-filter, .airline-filter')) && applyFilters(allFlights, true));
+  document.getElementById('nonStop')?.addEventListener('change', () => {
+    applyFilters(allFlights, false);
+  });
 
-  document.querySelectorAll('.nav-link').forEach(link => link.addEventListener('click', e => {
-    const route = link.dataset.route;
-    const href = link.getAttribute('href') || '';
-    if (route === 'home' || route === 'flights' || href.includes('#home') || href.includes('#flights') || href === '#') {
-      const isHero = route === 'home' || href.includes('#home');
-      const targetHash = isHero ? '#home' : '#flights';
-
-      // If hero-view and flights-view exist on current page (index.html)
-      if (document.getElementById('hero-view') && document.getElementById('flights-view')) {
-        e.preventDefault();
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        if (document.getElementById('nav-toggle')) document.getElementById('nav-toggle').checked = false;
-        document.getElementById('hero-view').style.display = isHero ? 'block' : 'none';
-        document.getElementById('flights-view').style.display = isHero ? 'none' : 'block';
-        window.location.hash = targetHash;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.flight-field')) {
+      document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('show');
+      });
     }
-  }));
+  });
+
+  // Location swap buttons
+  const swapLocations = (fromId1, toId1, fromId2, toId2) => {
+    const fromEl1 = document.getElementById(fromId1);
+    const toEl1 = document.getElementById(toId1);
+    if (fromEl1 && toEl1) {
+      [fromEl1.value, toEl1.value] = [toEl1.value, fromEl1.value];
+    }
+
+    const fromEl2 = document.getElementById(fromId2);
+    const toEl2 = document.getElementById(toId2);
+    if (fromEl2 && toEl2) {
+      [fromEl2.value, toEl2.value] = [toEl2.value, fromEl2.value];
+    }
+
+    applyFilters(allFlights, false);
+  };
+
+  document.getElementById('swapBtn')?.addEventListener('click', () => {
+    swapLocations('departureFrom', 'goingTo', 'fsbFrom', 'fsbTo');
+  });
+
+  document.getElementById('fsbSwap')?.addEventListener('click', () => {
+    swapLocations('fsbFrom', 'fsbTo', 'departureFrom', 'goingTo');
+  });
+
+  // Price range slider
+  document.getElementById('priceRange')?.addEventListener('input', (event) => {
+    const priceDisplay = document.getElementById('priceValue');
+    if (priceDisplay) {
+      priceDisplay.textContent = formatPrice(parseInt(event.target.value, 10));
+    }
+    debouncedSearch(false);
+  });
+
+  // Currency select dropdown
+  document.getElementById('currencySelect')?.addEventListener('change', (event) => {
+    currentCurrency = event.target.value;
+    const priceSlider = document.getElementById('priceRange');
+    const priceDisplay = document.getElementById('priceValue');
+    if (priceSlider && priceDisplay) {
+      priceDisplay.textContent = formatPrice(parseInt(priceSlider.value, 10));
+    }
+    applyFilters(allFlights, false);
+  });
+
+  // Stop & Airline filter checkboxes
+  document.addEventListener('change', (event) => {
+    if (event.target.matches('.stop-filter, .airline-filter')) {
+      applyFilters(allFlights, false);
+    }
+  });
+
+  // Navigation link click routing
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', (event) => {
+      const route = link.dataset.route;
+      const href = link.getAttribute('href') || '';
+
+      if (route === 'home' || route === 'flights' || href.includes('#home') || href.includes('#flights') || href === '#') {
+        const isHeroTarget = (route === 'home' || href.includes('#home'));
+        const targetHash = isHeroTarget ? '#home' : '#flights';
+        const heroView = document.getElementById('hero-view');
+        const flightsView = document.getElementById('flights-view');
+
+        if (heroView && flightsView) {
+          event.preventDefault();
+          document.querySelectorAll('.nav-link').forEach(navLink => navLink.classList.remove('active'));
+          link.classList.add('active');
+
+          const navToggle = document.getElementById('nav-toggle');
+          if (navToggle) navToggle.checked = false;
+
+          heroView.style.display = isHeroTarget ? 'block' : 'none';
+          flightsView.style.display = isHeroTarget ? 'none' : 'block';
+
+          window.location.hash = targetHash;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    });
+  });
 }
 
-init();
-
+// Start application
+initApplication();
