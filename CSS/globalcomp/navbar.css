@@ -1,6 +1,6 @@
 /* SkyFlow AMS - Global Navbar Stylesheet */
 .site-header {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 999999 !important;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
   padding: 1rem 1.1rem 0;
   background: linear-gradient(180deg, rgba(255,255,255,.08), transparent);
   transition: background 0.3s ease;

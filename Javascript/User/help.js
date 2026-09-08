@@ -63,13 +63,30 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
       const btn = document.getElementById('submitBtn');
-      btn.disabled = true; btn.textContent = 'Sending...';
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
       try {
-        await fetch('https://formsubmit.co/ajax/contact.webdevit@gmail.com', { method: 'POST', body: new FormData(this), headers: { 'Accept': 'application/json' } });
-      } catch (err) {}
-      btn.textContent = 'Form Submitted ✓';
-      btn.style.backgroundColor = '#10b981';
-      this.reset();
+        const response = await fetch('https://formsubmit.co/ajax/9f3ce484957278cedbeac133e0580292', {
+          method: 'POST',
+          body: new FormData(this),
+          headers: { 'Accept': 'application/json' }
+        });
+        const result = await response.json();
+        if (response.ok && (result.success === "true" || result.success === true)) {
+          btn.textContent = 'Form Submitted ✓';
+          btn.style.backgroundColor = '#10b981';
+          this.reset();
+        } else {
+          alert(result.message || 'Submission failed. Please make sure you are serving this site via a web server (e.g. Live Server at http://127.0.0.1:5500).');
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      } catch (err) {
+        alert('Network error while submitting form. Please try again.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
     });
   }
 });
