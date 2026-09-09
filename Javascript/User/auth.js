@@ -208,11 +208,13 @@ function loginUser(userData) {
   localStorage.setItem('skyflow_user', JSON.stringify(userData));
   updateNavbarUI();
   closeDrawer();
+  window.dispatchEvent(new Event('skyflow_auth_changed'));
 }
 
 function logoutUser() {
   localStorage.removeItem('skyflow_user');
   updateNavbarUI();
+  window.dispatchEvent(new Event('skyflow_auth_changed'));
 }
 
 function updateNavbarUI() {
@@ -281,7 +283,8 @@ function initSkyFlowPage(activeRoute = 'home') {
   const isSubdir = window.location.pathname.includes('/help/') ||
                    window.location.pathname.includes('/mybookings/') ||
                    window.location.pathname.includes('/Track%20Flight/') ||
-                   window.location.pathname.includes('/Track Flight/');
+                   window.location.pathname.includes('/Track Flight/') ||
+                   window.location.pathname.includes('/AI_Assistence/');
 
   // Fix logo image src
   const logoImg = document.getElementById('navbarLogoImg');
@@ -295,14 +298,16 @@ function initSkyFlowPage(activeRoute = 'home') {
     flights:  '../index.html#flights',
     track:    '../Track%20Flight/trackFlight.html',
     bookings: '../mybookings/mybookings.html',
-    offers:   '#',
+    offers:   '../AI_Assistence/AI_Assistence.html',
+    ai:       '../AI_Assistence/AI_Assistence.html',
     help:     '../help/help.html'
   } : {
     home:     '#home',
     flights:  '#flights',
     track:    'Track%20Flight/trackFlight.html',
     bookings: 'mybookings/mybookings.html',
-    offers:   '#',
+    offers:   'AI_Assistence/AI_Assistence.html',
+    ai:       'AI_Assistence/AI_Assistence.html',
     help:     'help/help.html'
   };
 
