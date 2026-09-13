@@ -6,7 +6,9 @@
 @import "../globalcomp/navbar.css";
 @import "../globalcomp/footer.css";
 @import "../Landingcomp/hero.css";
-@import "../Landingcomp/flights.css";
+@import "../Landingcomp/destination.css";
+@import "../Landingcomp/deals.css";
+@import "../flightscomp/flights.css";
 @import "signup.css";
 
 /* Global Color Palette Variables */
