@@ -40,9 +40,9 @@ function ensureAuthDrawer() {
           <button type="submit" class="submit-btn">Sign In</button>
         </form>
         <form id="signupForm" class="auth-form" style="display: none;">
-          <div class="form-group"><label>Full Name</label><input type="text" id="fullName" placeholder="John Doe" required></div>
-          <div class="form-group"><label>Email Address</label><input type="email" id="signupEmail" placeholder="name@example.com" required></div>
-          <div class="form-group"><label>Password</label><input type="password" id="signupPassword" placeholder="At least 6 characters" required minlength="6"></div>
+          <div class="form-group"><label>Full Name</label><input type="text" id="fullName" placeholder="Enter your full name" required></div>
+          <div class="form-group"><label>Email Address</label><input type="email" id="signupEmail" placeholder="Enter your email address" required></div>
+          <div class="form-group"><label>Password</label><input type="password" id="signupPassword" placeholder="Enter your password" required minlength="6"></div>
           <button type="submit" class="submit-btn">Create Account</button>
         </form>
         <div class="divider"><span>OR</span></div>

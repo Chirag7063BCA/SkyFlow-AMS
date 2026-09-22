@@ -778,6 +778,9 @@ function setupCabinClassMenu(inputId, dropdownId, allFlights) {
 // ── Application Initialization & Event Binds ─────────────────────
 
 async function initApplication() {
+  if (window.componentsLoadedPromise) {
+    await window.componentsLoadedPromise;
+  }
   const [allFlights, allAirports] = await Promise.all([loadFlightsData(), loadAirportsData()]);
   const debouncedSearch = debounce((forceSearch = false) => applyFilters(allFlights, forceSearch), 120);
 
