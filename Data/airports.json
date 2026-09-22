@@ -713,5 +713,16 @@
     "latitude": 27.6966,
     "longitude": 85.3591,
     "type": "airport"
+  },
+  {
+    "id": 66,
+    "name": "Beijing Capital International Airport",
+    "city": "Beijing",
+    "country": "China",
+    "iata": "PEK",
+    "icao": "ZBAA",
+    "latitude": 40.0799,
+    "longitude": 116.6031,
+    "type": "airport"
   }
 ]
