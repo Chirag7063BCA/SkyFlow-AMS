@@ -1,9 +1,8 @@
 /**
- * SkyFlow AMS - Flights Page Logic
+ * SkyFlow AMS - Flights Page Logic (Simplified & Lightweight)
  */
 
-// ── Currency Conversion Configuration ──────────────────────────
-const CURRENCY_RATES = {
+window.CURRENCY_RATES = window.CURRENCY_RATES || {
   USD: { symbol: '$', rate: 1 },
   EUR: { symbol: '€', rate: 0.92 },
   GBP: { symbol: '£', rate: 0.79 },
@@ -11,793 +10,504 @@ const CURRENCY_RATES = {
   AED: { symbol: 'AED ', rate: 3.67 },
   JPY: { symbol: '¥', rate: 155 }
 };
+window.currentCurrency = window.currentCurrency || 'USD';
+window.CARDS_PER_PAGE = 60;
+window.currentRenderedFlights = [];
+window.currentDisplayLimit = window.CARDS_PER_PAGE;
 
-let currentCurrency = 'USD';
-
-/**
- * Formats a USD fare amount into the currently selected currency string
- */
+// ── Utility Helpers ──
 function formatPrice(amountUsd) {
-  const currencyInfo = CURRENCY_RATES[currentCurrency] || CURRENCY_RATES.USD;
-  const convertedAmount = Math.round(amountUsd * currencyInfo.rate);
-  return `${currencyInfo.symbol}${convertedAmount.toLocaleString()}`;
+  const c = window.CURRENCY_RATES[window.currentCurrency] || window.CURRENCY_RATES.USD;
+  return `${c.symbol}${Math.round(amountUsd * c.rate).toLocaleString()}`;
 }
 
-// ── Utility Helpers ─────────────────────────────────────────────
-
-/**
- * Prevents function execution until typing stops for a given delay
- */
-function debounce(callbackFunction, delayMs = 120) {
-  let timerId;
-  return function (...args) {
-    clearTimeout(timerId);
-    timerId = setTimeout(() => {
-      callbackFunction.apply(this, args);
-    }, delayMs);
-  };
+function debounce(fn, delay = 120) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); };
 }
 
-/**
- * Safely gets trimmed text value from an input element
- */
-function getInputValue(elementId) {
-  const element = document.getElementById(elementId);
-  return element ? element.value.trim() : '';
-}
+const getVal = (id) => (document.getElementById(id)?.value || '').trim();
 
-/**
- * Fetches JSON data with fallback relative URLs
- */
-async function fetchJsonData(url, fallbackData = []) {
-  const alternativeUrls = [
-    url,
-    url.replace(/^(\.\.\/)+/, '../../'),
-    url.replace(/^(\.\.\/)+/, '../'),
-    url.replace(/^(\.\.\/)+/, '/')
-  ];
-
-  for (const targetUrl of alternativeUrls) {
+async function fetchJsonData(url) {
+  const file = url.split(/[/\\]/).pop();
+  const paths = [url, `../../Data/${file}`, `../Data/${file}`, `Data/${file}`, `/Data/${file}`];
+  for (const p of paths) {
     try {
-      const response = await fetch(targetUrl);
-      if (response.ok) {
-        return await response.json();
-      }
-    } catch (error) {
-      // Continue to next alternative URL
-    }
+      const res = await fetch(p);
+      if (res.ok) return await res.json();
+    } catch (e) {}
   }
-
-  return fallbackData;
+  return [];
 }
 
-// ── Data Pre-Caching Loaders ────────────────────────────────────
+async function loadData() {
+  const [rawFlights, rawAirports] = await Promise.all([
+    fetchJsonData('../../Data/flights.json'),
+    fetchJsonData('../../Data/airports.json')
+  ]);
 
-/**
- * Loads flights data and pre-caches search metadata for 100x performance
- */
-async function loadFlightsData() {
-  const rawFlights = await fetchJsonData('../../Data/flights.json', []);
-  return rawFlights.map(flight => {
-    return {
-      ...flight,
-      _searchString: `${flight.flightNumber} ${flight.airline} ${flight.originCity} ${flight.destinationCity} ${flight.fromAirportCode} ${flight.toAirportCode} ${flight.status}`.toLowerCase(),
-      _numericFare: parseInt(flight.fare ? flight.fare.replace(/[^0-9]/g, '') : '0', 10) || 0,
-      _stopsCount: flight.nonStop ? 0 : 1,
-      _originCityLower: (flight.originCity || '').toLowerCase(),
-      _destCityLower: (flight.destinationCity || '').toLowerCase(),
-      _fromCodeLower: (flight.fromAirportCode || '').toLowerCase(),
-      _toCodeLower: (flight.toAirportCode || '').toLowerCase()
-    };
-  });
+  const flights = rawFlights.map(f => ({
+    ...f,
+    _searchStr: `${f.flightNumber} ${f.airline} ${f.originCity} ${f.destinationCity} ${f.fromAirportCode} ${f.toAirportCode} ${f.status}`.toLowerCase(),
+    _fareNum: parseInt(f.fare ? f.fare.replace(/[^0-9]/g, '') : '0', 10) || 0,
+    _stops: f.nonStop ? 0 : 1,
+    _fromCity: (f.originCity || '').toLowerCase(),
+    _toCity: (f.destinationCity || '').toLowerCase(),
+    _fromCode: (f.fromAirportCode || '').toLowerCase(),
+    _toCode: (f.toAirportCode || '').toLowerCase()
+  }));
+
+  const airports = rawAirports.map(a => ({
+    ...a,
+    _haystack: `${a.city || ''} ${a.name || ''} ${a.iata || ''} ${a.country || ''}`.toLowerCase()
+  }));
+
+  return { flights, airports };
 }
 
-/**
- * Loads airports data and pre-caches search haystacks for instant autocomplete
- */
-async function loadAirportsData() {
-  const rawAirports = await fetchJsonData('../../Data/airports.json', []);
-  return rawAirports.map(airport => {
-    return {
-      ...airport,
-      _searchHaystack: `${airport.city || ''} ${airport.name || ''} ${airport.iata || ''} ${airport.country || ''}`.toLowerCase()
-    };
-  });
+function parseTerm(str) {
+  if (!str) return { query: '', iata: '', city: '' };
+  const query = str.trim().toLowerCase();
+  const match = str.match(/\(([^)]+)\)$/);
+  const iata = match ? match[1].trim().toLowerCase() : '';
+  const city = str.split(',')[0].replace(/\([^)]*\)/, '').trim().toLowerCase();
+  return { query, iata, city };
 }
 
-// ── Search Term & Location Matchers ──────────────────────────────
-
-/**
- * Parses user input into raw text, IATA airport code, and city name
- */
-function parseSearchTerm(inputString) {
-  if (!inputString) {
-    return { rawQuery: '', iataCode: '', cityName: '' };
-  }
-
-  const rawQuery = inputString.trim().toLowerCase();
-  const parenthesisMatch = inputString.match(/\(([^)]+)\)$/);
-  const iataCode = parenthesisMatch ? parenthesisMatch[1].trim().toLowerCase() : '';
-  const cityName = inputString.split(',')[0].replace(/\([^)]*\)/, '').trim().toLowerCase();
-
-  return { rawQuery, iataCode, cityName };
+function matchLoc(city, code, term) {
+  if (!term.query) return true;
+  if (term.iata) return code === term.iata || (term.city && city.includes(term.city));
+  return city.includes(term.query) || (term.city && city.includes(term.city)) || code.includes(term.query);
 }
 
-/**
- * Strictly matches a flight location against parsed user search terms
- */
-function matchLocation(cityLower, codeLower, searchTerm) {
-  if (!searchTerm.rawQuery) {
-    return true;
-  }
-
-  if (searchTerm.iataCode) {
-    return codeLower === searchTerm.iataCode || (searchTerm.cityName && cityLower.includes(searchTerm.cityName));
-  }
-
-  return cityLower.includes(searchTerm.rawQuery) || 
-         (searchTerm.cityName && cityLower.includes(searchTerm.cityName)) || 
-         codeLower.includes(searchTerm.rawQuery);
-}
-
-// ── UI Card Rendering & DOM Management ──────────────────────────
-
-const CARDS_PER_PAGE = 60;
-let currentRenderedFlights = [];
-let currentDisplayLimit = CARDS_PER_PAGE;
-let hasUserSearched = false;
-
-/**
- * Builds HTML markup for a single flight card
- */
-function createFlightCardHtml(flight, animationIndex) {
-  const statusCssClass = (flight.status || '').toLowerCase().replace(/\s+/g, '-');
-  const cappedAnimationIndex = Math.min(animationIndex, 8);
-  const animationDelaySeconds = (cappedAnimationIndex * 0.03).toFixed(2);
-  const formattedFare = formatPrice(flight._numericFare);
-
+// ── Rendering Flight Cards ──
+function createCardHtml(f, idx) {
+  const statusClass = (f.status || '').toLowerCase().replace(/\s+/g, '-');
+  const delay = (Math.min(idx, 8) * 0.03).toFixed(2);
   return `
-    <article class="flight-card" style="animation-delay: ${animationDelaySeconds}s">
+    <article class="flight-card" style="animation-delay: ${delay}s">
       <div class="card-top">
         <div>
-          <p class="card-airline">${flight.flightNumber} · ${flight.airline}</p>
-          <h3 class="card-route">${flight.originCity} → ${flight.destinationCity}</h3>
+          <p class="card-airline">${f.flightNumber} · ${f.airline}</p>
+          <h3 class="card-route">${f.originCity} → ${f.destinationCity}</h3>
         </div>
         <div class="card-time">
-          <strong>${flight.departureTime} – ${flight.arrivalTime}</strong>
-          <span>${flight.duration}</span>
+          <strong>${f.departureTime} – ${f.arrivalTime}</strong>
+          <span>${f.duration}</span>
         </div>
       </div>
       <div class="card-meta">
-        <span class="pill">${flight.fromAirportCode} → ${flight.toAirportCode}</span>
-        <span class="pill">${flight.nonStop ? 'Non-stop' : '1 stop'}</span>
-        <span class="pill ${statusCssClass}">${flight.status}</span>
-        <span class="card-price">${formattedFare}</span>
+        <span class="pill">${f.fromAirportCode} → ${f.toAirportCode}</span>
+        <span class="pill">${f.nonStop ? 'Non-stop' : '1 stop'}</span>
+        <span class="pill ${statusClass}">${f.status}</span>
+        <span class="card-price">${formatPrice(f._fareNum)}</span>
       </div>
-    </article>
-  `;
+    </article>`;
 }
 
-/**
- * Renders flight cards in grid with paginated DOM performance
- */
-function renderFlightCards(flightsList, isIncremental = false) {
-  const gridContainer = document.getElementById('flightsGrid');
-  const resultsMessageElement = document.getElementById('resultsMsg');
+function renderFlightCards(list, isMore = false) {
+  const grid = document.getElementById('flightsGrid');
+  const msg = document.getElementById('resultsMsg');
+  if (!grid) return;
 
-  if (!gridContainer) return;
-
-  if (!isIncremental) {
-    currentRenderedFlights = flightsList;
-    currentDisplayLimit = CARDS_PER_PAGE;
+  if (!isMore) {
+    window.currentRenderedFlights = list;
+    window.currentDisplayLimit = window.CARDS_PER_PAGE;
   }
 
-  if (!flightsList.length) {
-    gridContainer.innerHTML = `
-      <div style="text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
-        <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.4rem;">No Flights Found</h3>
-        <p style="color: #64748b; font-size: 0.95rem; max-width: 420px; margin: 0 auto;">No flights match your exact search criteria. Try searching for different cities or airport codes.</p>
-      </div>
-    `;
-    if (resultsMessageElement) resultsMessageElement.textContent = 'No results.';
+  if (!list.length) {
+    grid.innerHTML = `
+      <div style="text-align:center; padding:3.5rem 1.5rem; background:#fff; border-radius:16px; border:1px solid rgba(0,0,0,0.06); box-shadow:0 4px 16px rgba(0,0,0,0.03);">
+        <div style="font-size:2.5rem; margin-bottom:0.5rem;">🔍</div>
+        <h3 style="font-size:1.25rem; font-weight:800; color:#1e293b; margin-bottom:0.4rem;">No Flights Found</h3>
+        <p style="color:#64748b; font-size:0.95rem; max-width:420px; margin:0 auto;">No flights match your search criteria. Try searching for different cities or codes.</p>
+      </div>`;
+    if (msg) msg.textContent = 'No results.';
     return;
   }
 
-  const visibleFlights = flightsList.slice(0, currentDisplayLimit);
-  let cardsHtml = visibleFlights.map((flight, index) => createFlightCardHtml(flight, index)).join('');
+  const visible = list.slice(0, window.currentDisplayLimit);
+  let html = visible.map((f, i) => createCardHtml(f, i)).join('');
 
-  if (flightsList.length > currentDisplayLimit) {
-    const remainingCount = flightsList.length - currentDisplayLimit;
-    cardsHtml += `
-      <div id="loadMoreContainer" style="grid-column: 1 / -1; text-align: center; padding: 1.5rem 0;">
-        <button id="loadMoreBtn" type="button" style="background: #1e293b; color: #ffffff; border: none; padding: 0.75rem 2rem; border-radius: 99px; font-weight: 700; cursor: pointer; transition: background 0.2s ease;">
-          Load More Flights (${remainingCount} remaining)
+  if (list.length > window.currentDisplayLimit) {
+    const rem = list.length - window.currentDisplayLimit;
+    html += `
+      <div id="loadMoreContainer" style="grid-column:1/-1; text-align:center; padding:1.5rem 0;">
+        <button id="loadMoreBtn" type="button" style="background:#1e293b; color:#fff; border:none; padding:0.75rem 2rem; border-radius:99px; font-weight:700; cursor:pointer;">
+          Load More Flights (${rem} remaining)
         </button>
-      </div>
-    `;
+      </div>`;
   }
 
-  gridContainer.innerHTML = cardsHtml;
+  grid.innerHTML = html;
 
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
-  if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', () => {
-      currentDisplayLimit += CARDS_PER_PAGE;
-      renderFlightCards(currentRenderedFlights, true);
-    });
-  }
+  document.getElementById('loadMoreBtn')?.addEventListener('click', () => {
+    window.currentDisplayLimit += window.CARDS_PER_PAGE;
+    renderFlightCards(window.currentRenderedFlights, true);
+  });
 
-  if (resultsMessageElement) {
-    const liveCount = flightsList.filter(f => (f.status || '').toLowerCase() !== 'scheduled').length;
-    resultsMessageElement.textContent = `${flightsList.length} flight${flightsList.length > 1 ? 's' : ''} found · ${liveCount} live`;
+  if (msg) {
+    const live = list.filter(f => (f.status || '').toLowerCase() !== 'scheduled').length;
+    msg.textContent = `${list.length} flight${list.length > 1 ? 's' : ''} found · ${live} live`;
   }
 }
 
-// ── Search & Filter Logic ────────────────────────────────────────
+// ── Filtering Logic ──
+function applyFilters(allFlights) {
+  const isFlightsView = document.getElementById('flights-view')?.style.display === 'block';
+  const kw = getVal('flightSearch').toLowerCase();
+  const fromVal = isFlightsView ? (getVal('fsbFrom') || getVal('departureFrom')) : (getVal('departureFrom') || getVal('fsbFrom'));
+  const toVal = isFlightsView ? (getVal('fsbTo') || getVal('goingTo')) : (getVal('goingTo') || getVal('fsbTo'));
 
-/**
- * Main function to filter flights based on active inputs and sidebar options
- */
-function applyFilters(allFlights, forceSearch = false) {
-  if (forceSearch) {
-    hasUserSearched = true;
-  }
+  const fromTerm = parseTerm(fromVal);
+  const toTerm = parseTerm(toVal);
+  const isNonStop = document.getElementById('nonStop')?.checked;
+  const maxPrice = parseInt(getVal('priceRange') || '5000', 10);
 
-  const isFlightsViewVisible = document.getElementById('flights-view')?.style.display === 'block';
-  const keywordSearchTerm = getInputValue('flightSearch').toLowerCase();
+  const getChecked = (sel) => Array.from(document.querySelectorAll(sel)).map(e => e.value);
+  const stops = getChecked('.stop-filter:checked').map(Number);
+  const airlines = getChecked('.airline-filter:checked');
 
-  const fromInputValue = isFlightsViewVisible 
-    ? (getInputValue('fsbFrom') || getInputValue('departureFrom')) 
-    : (getInputValue('departureFrom') || getInputValue('fsbFrom'));
+  const hasInput = Boolean(kw || fromTerm.query || toTerm.query);
 
-  const toInputValue = isFlightsViewVisible 
-    ? (getInputValue('fsbTo') || getInputValue('goingTo')) 
-    : (getInputValue('goingTo') || getInputValue('fsbTo'));
-
-  const fromSearchTerm = parseSearchTerm(fromInputValue);
-  const toSearchTerm = parseSearchTerm(toInputValue);
-
-  const isNonStopOnly = document.getElementById('nonStop')?.checked;
-  const maxPriceLimit = parseInt(getInputValue('priceRange') || '5000', 10);
-
-  const getCheckedValues = (selector) => Array.from(document.querySelectorAll(selector)).map(element => element.value);
-  const checkedStops = getCheckedValues('.stop-filter:checked').map(Number);
-  const checkedAirlines = getCheckedValues('.airline-filter:checked');
-
-  const hasSearchInput = Boolean(keywordSearchTerm || fromSearchTerm.rawQuery || toSearchTerm.rawQuery);
-
-  // If no input has been entered by the user, keep placeholder prompt visible
-  if (!hasSearchInput) {
-    const gridContainer = document.getElementById('flightsGrid');
-    const resultsMessageElement = document.getElementById('resultsMsg');
-
-    if (gridContainer) {
-      gridContainer.innerHTML = `
-        <div style="text-align: center; padding: 3.5rem 1.5rem; background: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
-          <div style="margin-bottom: 0.75rem;">
-            <img src="../../images/navbar logo.gif" alt="SkyFlow Logo" style="height: 55px; width: auto; object-fit: contain; display: inline-block;">
+  if (!hasInput) {
+    const grid = document.getElementById('flightsGrid');
+    const msg = document.getElementById('resultsMsg');
+    if (grid) {
+      grid.innerHTML = `
+        <div style="text-align:center; padding:3.5rem 1.5rem; background:#fff; border-radius:16px; border:1px solid rgba(0,0,0,0.06); box-shadow:0 4px 16px rgba(0,0,0,0.03);">
+          <div style="margin-bottom:0.75rem;">
+            <img src="../../images/navbar logo.gif" alt="SkyFlow Logo" style="height:55px; width:auto; object-fit:contain; display:inline-block;">
           </div>
-          <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 0.4rem;">Search for a Flight</h3>
-          <p style="color: #64748b; font-size: 0.95rem; max-width: 440px; margin: 0 auto;">Please enter a departure or destination city in the search fields above.</p>
-        </div>
-      `;
+          <h3 style="font-size:1.25rem; font-weight:800; color:#1e293b; margin-bottom:0.4rem;">Search for a Flight</h3>
+          <p style="color:#64748b; font-size:0.95rem; max-width:440px; margin:0 auto;">Please enter a departure or destination city in the search fields above.</p>
+        </div>`;
     }
-
-    if (resultsMessageElement) {
-      resultsMessageElement.textContent = 'Please enter origin or destination city.';
-    }
-
-    const titleElement = document.getElementById('flightsTitle');
-    if (titleElement) {
-      titleElement.innerHTML = 'SEARCH <span class="flights-title-accent">FLIGHTS</span>';
-    }
-
-    const noteElement = document.getElementById('flightsNote');
-    if (noteElement) {
-      noteElement.innerHTML = 'Enter your travel details above to search.';
-    }
-
+    if (msg) msg.textContent = 'Please enter origin or destination city.';
+    const title = document.getElementById('flightsTitle');
+    if (title) title.innerHTML = 'SEARCH <span class="flights-title-accent">FLIGHTS</span>';
+    const note = document.getElementById('flightsNote');
+    if (note) note.innerHTML = 'Enter your travel details above to search.';
     return;
   }
 
-  // Filter flights matching input fields and sidebar controls
-  const matchingFlights = allFlights.filter(flight => {
-    const matchesKeyword = !keywordSearchTerm || flight._searchString.includes(keywordSearchTerm);
-    const matchesFrom = matchLocation(flight._originCityLower, flight._fromCodeLower, fromSearchTerm);
-    const matchesTo = matchLocation(flight._destCityLower, flight._toCodeLower, toSearchTerm);
-    const matchesNonStop = !isNonStopOnly || flight.nonStop;
-    const matchesPrice = flight._numericFare <= maxPriceLimit;
-    const matchesStops = !checkedStops.length || checkedStops.includes(flight._stopsCount) || (flight._stopsCount > 1 && checkedStops.includes(2));
-    const matchesAirline = !checkedAirlines.length || checkedAirlines.includes(flight.airline);
-
-    return matchesKeyword && matchesFrom && matchesTo && matchesNonStop && matchesPrice && matchesStops && matchesAirline;
+  const matches = allFlights.filter(f => {
+    const mKw = !kw || f._searchStr.includes(kw);
+    const mFrom = matchLoc(f._fromCity, f._fromCode, fromTerm);
+    const mTo = matchLoc(f._toCity, f._toCode, toTerm);
+    const mStop = !isNonStop || f.nonStop;
+    const mPrice = f._fareNum <= maxPrice;
+    const mStops = !stops.length || stops.includes(f._stops) || (f._stops > 1 && stops.includes(2));
+    const mAir = !airlines.length || airlines.includes(f.airline);
+    return mKw && mFrom && mTo && mStop && mPrice && mStops && mAir;
   });
 
-  const titleElement = document.getElementById('flightsTitle');
-  if (titleElement) {
-    titleElement.innerHTML = matchingFlights.length 
-      ? 'MATCHING <span class="flights-title-accent">FLIGHTS</span>' 
-      : 'NO <span class="flights-title-accent">FLIGHTS</span>';
-  }
+  const title = document.getElementById('flightsTitle');
+  if (title) title.innerHTML = matches.length ? 'MATCHING <span class="flights-title-accent">FLIGHTS</span>' : 'NO <span class="flights-title-accent">FLIGHTS</span>';
+  const note = document.getElementById('flightsNote');
+  if (note) note.innerHTML = matches.length ? `${matches.length} match${matches.length === 1 ? '' : 'es'} found.` : 'No flights found matching your search.';
 
-  const noteElement = document.getElementById('flightsNote');
-  if (noteElement) {
-    noteElement.innerHTML = matchingFlights.length
-      ? `${matchingFlights.length} match${matchingFlights.length === 1 ? '' : 'es'} found.` 
-      : 'No flights found matching your search.';
-  }
-
-  renderFlightCards(matchingFlights);
+  renderFlightCards(matches);
 }
 
-// ── Dropdown Component Setup ─────────────────────────────────────
+// ── Dropdown Controls ──
+function setupAutocomplete(inputId, dropdownId, airports, allFlights, triggerSearch) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
 
-/**
- * Autocomplete dropdown setup for FROM and TO location fields
- */
-function setupAutocomplete(inputId, dropdownId, airportsList, allFlights, debouncedSearch) {
-  const inputElement = document.getElementById(inputId);
-  const dropdownElement = document.getElementById(dropdownId);
-  if (!inputElement || !dropdownElement) return;
+  let suggestions = [], activeIdx = -1;
 
-  let activeIndex = -1;
-  let currentSuggestions = [];
+  const render = (q) => {
+    const lq = q.toLowerCase();
+    suggestions = q ? airports.filter(a => a._haystack.includes(lq)).slice(0, 10) : airports.slice(0, 10);
+    activeIdx = -1;
 
-  const renderSuggestions = (searchQuery) => {
-    const lowerQuery = searchQuery.toLowerCase();
-    currentSuggestions = searchQuery 
-      ? airportsList.filter(airport => airport._searchHaystack.includes(lowerQuery)).slice(0, 10) 
-      : airportsList.slice(0, 10);
-
-    activeIndex = -1;
-
-    if (!currentSuggestions.length) {
-      dropdownElement.innerHTML = '<div style="padding: 1rem; color: #49769f; text-align: center;">No matches</div>';
+    if (!suggestions.length) {
+      dropdown.innerHTML = '<div style="padding:1rem; color:#49769f; text-align:center;">No matches</div>';
     } else {
-      dropdownElement.innerHTML = currentSuggestions.map((airport, index) => {
-        const highlightText = (text) => {
-          if (!searchQuery) return text;
-          const safeQuery = searchQuery.replace(/[-\/\\^$*+?.()|[\\]{}]/g, '\\$&');
-          return text.replace(new RegExp(`(${safeQuery})`, 'gi'), '<span class="autocomplete-highlight">$1</span>');
-        };
-
-        const cityText = highlightText(airport.city || '');
-        const countryText = airport.country || '';
-        const airportNameText = highlightText(airport.name || '');
-        const iataBadgeText = highlightText(airport.iata || '');
-
-        return `
-          <div class="autocomplete-option" data-index="${index}">
-            <div class="autocomplete-option-icon">✈</div>
-            <div class="autocomplete-option-info">
-              <span class="autocomplete-option-city">${cityText}, ${countryText}</span>
-              <span class="autocomplete-option-airport">${airportNameText}</span>
-            </div>
-            <span class="autocomplete-option-badge">${iataBadgeText}</span>
+      dropdown.innerHTML = suggestions.map((a, i) => `
+        <div class="autocomplete-option" data-index="${i}">
+          <div class="autocomplete-option-icon">✈</div>
+          <div class="autocomplete-option-info">
+            <span class="autocomplete-option-city">${a.city}, ${a.country || ''}</span>
+            <span class="autocomplete-option-airport">${a.name}</span>
           </div>
-        `;
-      }).join('');
+          <span class="autocomplete-option-badge">${a.iata}</span>
+        </div>`).join('');
     }
-
-    dropdownElement.classList.add('show');
+    dropdown.classList.add('show');
   };
 
-  const selectSuggestion = (optionIndex) => {
-    const selectedAirport = currentSuggestions[optionIndex];
-    if (!selectedAirport) return;
+  const select = (idx) => {
+    const item = suggestions[idx];
+    if (!item) return;
+    const val = `${item.city}, ${item.country || ''} (${item.iata})`;
+    input.value = val;
 
-    const formattedValue = `${selectedAirport.city}, ${selectedAirport.country || ''} (${selectedAirport.iata})`;
-    inputElement.value = formattedValue;
-
-    // Synchronize inputs between Hero section and Flights section
-    if (inputId === 'departureFrom') {
-      const fsbFrom = document.getElementById('fsbFrom');
-      if (fsbFrom) fsbFrom.value = formattedValue;
-    }
-    if (inputId === 'fsbFrom') {
-      const heroFrom = document.getElementById('departureFrom');
-      if (heroFrom) heroFrom.value = formattedValue;
-    }
-    if (inputId === 'goingTo') {
-      const fsbTo = document.getElementById('fsbTo');
-      if (fsbTo) fsbTo.value = formattedValue;
-    }
-    if (inputId === 'fsbTo') {
-      const heroTo = document.getElementById('goingTo');
-      if (heroTo) heroTo.value = formattedValue;
+    const syncMap = { departureFrom: 'fsbFrom', fsbFrom: 'departureFrom', goingTo: 'fsbTo', fsbTo: 'goingTo' };
+    if (syncMap[inputId]) {
+      const pair = document.getElementById(syncMap[inputId]);
+      if (pair) pair.value = val;
     }
 
-    dropdownElement.classList.remove('show');
-    applyFilters(allFlights, true);
+    dropdown.classList.remove('show');
+    applyFilters(allFlights);
   };
 
-  inputElement.addEventListener('focus', () => {
-    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
-      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
-    });
-    renderSuggestions(inputElement.value.trim());
+  input.addEventListener('focus', () => {
+    document.querySelectorAll('.autocomplete-dropdown').forEach(d => d !== dropdown && d.classList.remove('show'));
+    render(input.value.trim());
   });
 
-  inputElement.addEventListener('input', () => {
-    renderSuggestions(inputElement.value.trim());
+  input.addEventListener('input', () => render(input.value.trim()));
+
+  dropdown.addEventListener('click', (e) => {
+    const opt = e.target.closest('.autocomplete-option');
+    if (opt) select(parseInt(opt.dataset.index, 10));
   });
 
-  dropdownElement.addEventListener('click', (event) => {
-    const clickedOption = event.target.closest('.autocomplete-option');
-    if (clickedOption) {
-      selectSuggestion(clickedOption.dataset.index);
-    }
-  });
-
-  inputElement.addEventListener('keydown', (event) => {
-    if (!dropdownElement.classList.contains('show')) {
-      if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
-        renderSuggestions(inputElement.value.trim());
-      }
-      return;
-    }
-
-    if (event.key === 'Escape') {
-      dropdownElement.classList.remove('show');
-      inputElement.blur();
-      return;
-    }
-
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      selectSuggestion(Math.max(0, activeIndex));
-      return;
-    }
-
-    if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
-      event.preventDefault();
-      const direction = event.key === 'ArrowDown' ? 1 : -1;
-      activeIndex = (activeIndex + direction + currentSuggestions.length) % currentSuggestions.length;
-
-      dropdownElement.querySelectorAll('.autocomplete-option').forEach((optionElement, index) => {
-        optionElement.classList.toggle('active', index === activeIndex);
-        if (index === activeIndex) {
-          optionElement.scrollIntoView({ block: 'nearest' });
-        }
+  input.addEventListener('keydown', (e) => {
+    if (!dropdown.classList.contains('show')) return;
+    if (e.key === 'Escape') dropdown.classList.remove('show');
+    else if (e.key === 'Enter') { e.preventDefault(); select(Math.max(0, activeIdx)); }
+    else if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
+      e.preventDefault();
+      const dir = e.key === 'ArrowDown' ? 1 : -1;
+      activeIdx = (activeIdx + dir + suggestions.length) % suggestions.length;
+      dropdown.querySelectorAll('.autocomplete-option').forEach((el, i) => {
+        el.classList.toggle('active', i === activeIdx);
+        if (i === activeIdx) el.scrollIntoView({ block: 'nearest' });
       });
     }
   });
 }
 
-/**
- * Calendar picker dropdown setup for DEPART and RETURN date fields
- */
 function setupCalendarPicker(inputId, dropdownId, allFlights) {
-  const inputElement = document.getElementById(inputId);
-  const dropdownElement = document.getElementById(dropdownId);
-  if (!inputElement || !dropdownElement) return;
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
 
-  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const MONTH_SHORT_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  let curDate = new Date(2026, 7, 1);
 
-  let activeCalendarDate = new Date(2026, 7, 1);
-
-  const parseFormattedDate = (dateString) => {
-    if (!dateString) return null;
-    const parts = dateString.split(', ');
-    const cleanedDateStr = parts.length > 1 ? parts[1] : dateString;
-    const tokens = cleanedDateStr.trim().split(/\s+/);
+  const parseDate = (str) => {
+    if (!str) return null;
+    const parts = str.split(', ');
+    const tokens = (parts.length > 1 ? parts[1] : str).trim().split(/\s+/);
     if (tokens.length < 3) return null;
-
-    const dayNumber = parseInt(tokens[0], 10);
-    const monthIndex = MONTH_SHORT_NAMES.findIndex(month => month.toLowerCase() === tokens[1].toLowerCase());
-    if (monthIndex === -1 || isNaN(dayNumber)) return null;
-
-    const yearNumber = tokens[2].length === 2 ? 2000 + parseInt(tokens[2], 10) : parseInt(tokens[2], 10);
-    return new Date(yearNumber, monthIndex, dayNumber);
+    const day = parseInt(tokens[0], 10);
+    const mIdx = MONTHS_SHORT.findIndex(m => m.toLowerCase() === tokens[1].toLowerCase());
+    if (mIdx === -1 || isNaN(day)) return null;
+    const yr = tokens[2].length === 2 ? 2000 + parseInt(tokens[2], 10) : parseInt(tokens[2], 10);
+    return new Date(yr, mIdx, day);
   };
 
-  const renderCalendarGrid = () => {
-    const selectedDate = parseFormattedDate(inputElement.value);
-    const currentYear = activeCalendarDate.getFullYear();
-    const currentMonth = activeCalendarDate.getMonth();
-    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const renderCal = () => {
+    const sel = parseDate(input.value);
+    const yr = curDate.getFullYear(), mo = curDate.getMonth();
+    const firstDay = new Date(yr, mo, 1).getDay();
+    const totalDays = new Date(yr, mo + 1, 0).getDate();
 
-    let calendarHtml = `
+    let html = `
       <div class="cal-header">
         <button type="button" class="cal-nav-btn prev-month">&lsaquo;</button>
-        <span class="cal-title">${MONTH_NAMES[currentMonth]} ${currentYear}</span>
+        <span class="cal-title">${MONTHS[mo]} ${yr}</span>
         <button type="button" class="cal-nav-btn next-month">&rsaquo;</button>
       </div>
-      <div class="cal-weekdays">
-        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-      </div>
-      <div class="cal-days-grid">
-    `;
+      <div class="cal-weekdays"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+      <div class="cal-days-grid">`;
 
-    for (let i = 0; i < firstDayIndex; i++) {
-      calendarHtml += `<div class="cal-day empty"></div>`;
+    for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
+    for (let d = 1; d <= totalDays; d++) {
+      const isSel = sel && sel.getFullYear() === yr && sel.getMonth() === mo && sel.getDate() === d;
+      html += `<div class="cal-day ${isSel ? 'selected' : ''}" data-day="${d}">${d}</div>`;
     }
+    html += `</div>`;
+    dropdown.innerHTML = html;
 
-    const selectedYear = selectedDate ? selectedDate.getFullYear() : -1;
-    const selectedMonth = selectedDate ? selectedDate.getMonth() : -1;
-    const selectedDay = selectedDate ? selectedDate.getDate() : -1;
+    dropdown.querySelector('.prev-month')?.addEventListener('click', (e) => { e.stopPropagation(); curDate.setMonth(mo - 1); renderCal(); });
+    dropdown.querySelector('.next-month')?.addEventListener('click', (e) => { e.stopPropagation(); curDate.setMonth(mo + 1); renderCal(); });
 
-    for (let day = 1; day <= totalDaysInMonth; day++) {
-      const isSelected = (selectedYear === currentYear && selectedMonth === currentMonth && selectedDay === day);
-      calendarHtml += `<div class="cal-day ${isSelected ? 'selected' : ''}" data-day="${day}">${day}</div>`;
-    }
-
-    calendarHtml += `</div>`;
-    dropdownElement.innerHTML = calendarHtml;
-
-    dropdownElement.querySelector('.prev-month')?.addEventListener('click', (event) => {
-      event.stopPropagation();
-      activeCalendarDate.setMonth(activeCalendarDate.getMonth() - 1);
-      renderCalendarGrid();
-    });
-
-    dropdownElement.querySelector('.next-month')?.addEventListener('click', (event) => {
-      event.stopPropagation();
-      activeCalendarDate.setMonth(activeCalendarDate.getMonth() + 1);
-      renderCalendarGrid();
-    });
-
-    dropdownElement.querySelectorAll('.cal-day[data-day]').forEach(dayElement => {
-      dayElement.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const dayNumber = parseInt(dayElement.dataset.day, 10);
-        const chosenDate = new Date(currentYear, currentMonth, dayNumber);
-        const dayName = DAY_SHORT_NAMES[chosenDate.getDay()];
-        const monthName = MONTH_SHORT_NAMES[currentMonth];
-        const twoDigitYear = String(currentYear).slice(-2);
-
-        inputElement.value = `${dayName}, ${dayNumber} ${monthName} ${twoDigitYear}`;
-        dropdownElement.classList.remove('show');
-        applyFilters(allFlights, false);
+    dropdown.querySelectorAll('.cal-day[data-day]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const d = parseInt(el.dataset.day, 10);
+        const dt = new Date(yr, mo, d);
+        input.value = `${DAYS_SHORT[dt.getDay()]}, ${d} ${MONTHS_SHORT[mo]} ${String(yr).slice(-2)}`;
+        dropdown.classList.remove('show');
+        applyFilters(allFlights);
       });
     });
   };
 
-  const openCalendarDropdown = (event) => {
-    event.stopPropagation();
-    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
-      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
-    });
-    const parsedDate = parseFormattedDate(inputElement.value);
-    if (parsedDate) {
-      activeCalendarDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1);
-    }
-    renderCalendarGrid();
-    dropdownElement.classList.add('show');
+  const open = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.autocomplete-dropdown').forEach(d => d !== dropdown && d.classList.remove('show'));
+    const p = parseDate(input.value);
+    if (p) curDate = new Date(p.getFullYear(), p.getMonth(), 1);
+    renderCal();
+    dropdown.classList.add('show');
   };
 
-  inputElement.addEventListener('click', openCalendarDropdown);
-  inputElement.parentElement?.addEventListener('click', (event) => {
-    if (event.target.id === 'fsbReturnClear' || event.target.closest('#fsbReturnClear')) return;
-    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
-      openCalendarDropdown(event);
-    }
+  input.addEventListener('click', open);
+  input.parentElement?.addEventListener('click', (e) => {
+    if (e.target.id === 'fsbReturnClear' || e.target.closest('#fsbReturnClear')) return;
+    if (e.target !== input && !dropdown.contains(e.target)) open(e);
   });
 }
 
-/**
- * Travellers dropdown setup
- */
+function setupSimpleMenu(inputId, dropdownId, getHtml, onOptionClick) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
+
+  const open = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.autocomplete-dropdown').forEach(d => d !== dropdown && d.classList.remove('show'));
+    dropdown.innerHTML = getHtml(input.value);
+    dropdown.querySelectorAll('[data-val]').forEach(el => {
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        onOptionClick(el.dataset.val, input);
+        dropdown.classList.remove('show');
+      });
+    });
+    dropdown.classList.add('show');
+  };
+
+  input.addEventListener('click', open);
+  input.parentElement?.addEventListener('click', (e) => {
+    if (e.target !== input && !dropdown.contains(e.target)) open(e);
+  });
+}
+
 function setupTravellersMenu(inputId, dropdownId, allFlights) {
-  const inputElement = document.getElementById(inputId);
-  const dropdownElement = document.getElementById(dropdownId);
-  if (!inputElement || !dropdownElement) return;
-
-  const renderTravellersMenu = () => {
-    const currentCount = parseInt(inputElement.value, 10) || 1;
-    let menuHtml = `<div class="autocomplete-header">SELECT TRAVELLERS (MAX 10)</div>`;
-
-    for (let count = 1; count <= 10; count++) {
-      const isActive = (count === currentCount);
-      const labelText = count === 1 ? '1 Adult' : `${count} Adults`;
-      const descriptionText = count === 1 ? 'Single passenger' : (count === 10 ? 'Maximum group booking (10 persons)' : `${count} Passengers booking`);
-      const badgeText = count === 10 ? '10 Max' : `${count} ${count === 1 ? 'Person' : 'Persons'}`;
-
-      menuHtml += `
-        <div class="traveller-option ${isActive ? 'active' : ''}" data-count="${count}">
+  setupSimpleMenu(inputId, dropdownId, (val) => {
+    const cur = parseInt(val, 10) || 1;
+    let html = `<div class="autocomplete-header">SELECT TRAVELLERS (MAX 10)</div>`;
+    for (let c = 1; c <= 10; c++) {
+      const active = c === cur ? 'active' : '';
+      const label = c === 1 ? '1 Adult' : `${c} Adults`;
+      const sub = c === 1 ? 'Single passenger' : (c === 10 ? 'Maximum group booking (10 persons)' : `${c} Passengers booking`);
+      const badge = c === 10 ? '10 Max' : `${c} ${c === 1 ? 'Person' : 'Persons'}`;
+      html += `
+        <div class="traveller-option ${active}" data-val="${c}">
           <div class="traveller-info">
-            <div class="traveller-icon">${count === 1 ? '👤' : '👥'}</div>
-            <div>
-              <div class="traveller-label">${labelText}</div>
-              <div class="traveller-sub">${descriptionText}</div>
-            </div>
+            <div class="traveller-icon">${c === 1 ? '👤' : '👥'}</div>
+            <div><div class="traveller-label">${label}</div><div class="traveller-sub">${sub}</div></div>
           </div>
-          <span class="traveller-badge">${badgeText}</span>
-        </div>
-      `;
+          <span class="traveller-badge">${badge}</span>
+        </div>`;
     }
-
-    dropdownElement.innerHTML = menuHtml;
-
-    dropdownElement.querySelectorAll('.traveller-option').forEach(optionElement => {
-      optionElement.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const count = parseInt(optionElement.dataset.count, 10);
-        inputElement.value = count === 1 ? '1 Adult' : `${count} Adults`;
-        dropdownElement.classList.remove('show');
-        applyFilters(allFlights, false);
-      });
-    });
-  };
-
-  const openTravellersDropdown = (event) => {
-    event.stopPropagation();
-    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
-      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
-    });
-    renderTravellersMenu();
-    dropdownElement.classList.add('show');
-  };
-
-  inputElement.addEventListener('click', openTravellersDropdown);
-  inputElement.parentElement?.addEventListener('click', (event) => {
-    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
-      openTravellersDropdown(event);
-    }
+    return html;
+  }, (cnt, inp) => {
+    const c = parseInt(cnt, 10);
+    inp.value = c === 1 ? '1 Adult' : `${c} Adults`;
+    applyFilters(allFlights);
   });
 }
 
-/**
- * Trip Type dropdown setup (Round Trip / One Way)
- */
 function setupTripTypeMenu(inputId, dropdownId, allFlights) {
-  const inputElement = document.getElementById(inputId);
-  const dropdownElement = document.getElementById(dropdownId);
-  if (!inputElement || !dropdownElement) return;
-
-  const renderTripTypeMenu = () => {
-    const currentValue = inputElement.value;
-    dropdownElement.innerHTML = `
-      <div class="autocomplete-header">SELECT TRIP TYPE</div>
-      <div class="traveller-option ${currentValue === 'Round Trip' ? 'active' : ''}" data-value="Round Trip">
-        <div class="traveller-info">
-          <div class="traveller-icon">🔁</div>
-          <div>
-            <div class="traveller-label">Round Trip</div>
-            <div class="traveller-sub">Return flight included</div>
-          </div>
-        </div>
-      </div>
-      <div class="traveller-option ${currentValue === 'One Way' ? 'active' : ''}" data-value="One Way">
-        <div class="traveller-info">
-          <div class="traveller-icon">➡️</div>
-          <div>
-            <div class="traveller-label">One Way</div>
-            <div class="traveller-sub">Single directional flight</div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    dropdownElement.querySelectorAll('.traveller-option').forEach(optionElement => {
-      optionElement.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const selectedValue = optionElement.dataset.value;
-        inputElement.value = selectedValue;
-
-        const returnInput = document.getElementById('fsbReturn');
-        const returnCardContainer = returnInput?.closest('.fsb-card');
-
-        if (selectedValue === 'One Way') {
-          if (returnInput) returnInput.value = '';
-          if (returnCardContainer) returnCardContainer.style.opacity = '0.4';
-        } else {
-          if (returnInput && !returnInput.value) returnInput.value = 'Fri, 7 Aug 26';
-          if (returnCardContainer) returnCardContainer.style.opacity = '1';
-        }
-
-        dropdownElement.classList.remove('show');
-        applyFilters(allFlights, false);
-      });
-    });
-  };
-
-  const openTripTypeDropdown = (event) => {
-    event.stopPropagation();
-    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
-      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
-    });
-    renderTripTypeMenu();
-    dropdownElement.classList.add('show');
-  };
-
-  inputElement.addEventListener('click', openTripTypeDropdown);
-  inputElement.parentElement?.addEventListener('click', (event) => {
-    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
-      openTripTypeDropdown(event);
+  setupSimpleMenu(inputId, dropdownId, (val) => `
+    <div class="autocomplete-header">SELECT TRIP TYPE</div>
+    <div class="traveller-option ${val === 'Round Trip' ? 'active' : ''}" data-val="Round Trip">
+      <div class="traveller-info"><div class="traveller-icon">🔁</div><div><div class="traveller-label">Round Trip</div><div class="traveller-sub">Return flight included</div></div></div>
+    </div>
+    <div class="traveller-option ${val === 'One Way' ? 'active' : ''}" data-val="One Way">
+      <div class="traveller-info"><div class="traveller-icon">➡️</div><div><div class="traveller-label">One Way</div><div class="traveller-sub">Single directional flight</div></div></div>
+    </div>`,
+  (v, inp) => {
+    inp.value = v;
+    const retInp = document.getElementById('fsbReturn');
+    const retCard = retInp?.closest('.fsb-card');
+    if (v === 'One Way') {
+      if (retInp) retInp.value = '';
+      if (retCard) retCard.style.opacity = '0.4';
+    } else {
+      if (retInp && !retInp.value) retInp.value = 'Fri, 7 Aug 26';
+      if (retCard) retCard.style.opacity = '1';
     }
+    applyFilters(allFlights);
   });
 }
 
-/**
- * Cabin Class dropdown setup
- */
 function setupCabinClassMenu(inputId, dropdownId, allFlights) {
-  const inputElement = document.getElementById(inputId);
-  const dropdownElement = document.getElementById(dropdownId);
-  if (!inputElement || !dropdownElement) return;
-
-  const cabinOptions = [
+  const options = [
     { label: 'Economy / Premium', sub: 'Standard & extra legroom seats', icon: '🪑' },
     { label: 'Business Class', sub: 'Lie-flat seats & lounge access', icon: '💼' },
     { label: 'First Class', sub: 'Private suite & luxury service', icon: '👑' }
   ];
 
-  const renderCabinClassMenu = () => {
-    const currentValue = inputElement.value;
-    let menuHtml = `<div class="autocomplete-header">SELECT CABIN CLASS</div>`;
-
-    cabinOptions.forEach(option => {
-      const isActive = currentValue.includes(option.label.split(' ')[0]);
-      menuHtml += `
-        <div class="traveller-option ${isActive ? 'active' : ''}" data-value="${option.label}">
-          <div class="traveller-info">
-            <div class="traveller-icon">${option.icon}</div>
-            <div>
-              <div class="traveller-label">${option.label}</div>
-              <div class="traveller-sub">${option.sub}</div>
-            </div>
-          </div>
-        </div>
-      `;
+  setupSimpleMenu(inputId, dropdownId, (val) => {
+    let html = `<div class="autocomplete-header">SELECT CABIN CLASS</div>`;
+    options.forEach(opt => {
+      const active = val.includes(opt.label.split(' ')[0]) ? 'active' : '';
+      html += `
+        <div class="traveller-option ${active}" data-val="${opt.label}">
+          <div class="traveller-info"><div class="traveller-icon">${opt.icon}</div><div><div class="traveller-label">${opt.label}</div><div class="traveller-sub">${opt.sub}</div></div></div>
+        </div>`;
     });
-
-    dropdownElement.innerHTML = menuHtml;
-
-    dropdownElement.querySelectorAll('.traveller-option').forEach(optionElement => {
-      optionElement.addEventListener('click', (event) => {
-        event.stopPropagation();
-        inputElement.value = optionElement.dataset.value;
-        dropdownElement.classList.remove('show');
-        applyFilters(allFlights, false);
-      });
-    });
-  };
-
-  const openCabinClassDropdown = (event) => {
-    event.stopPropagation();
-    document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
-      if (dropdown !== dropdownElement) dropdown.classList.remove('show');
-    });
-    renderCabinClassMenu();
-    dropdownElement.classList.add('show');
-  };
-
-  inputElement.addEventListener('click', openCabinClassDropdown);
-  inputElement.parentElement?.addEventListener('click', (event) => {
-    if (event.target !== inputElement && !dropdownElement.contains(event.target)) {
-      openCabinClassDropdown(event);
-    }
+    return html;
+  }, (v, inp) => {
+    inp.value = v;
+    applyFilters(allFlights);
   });
 }
 
-// ── Application Initialization & Event Binds ─────────────────────
+function setupTravellersClassMenu(inputId, dropdownId, allFlights) {
+  const options = [
+    { label: 'Economy', sub: 'Standard seating' },
+    { label: 'Premium Economy', sub: 'Extra legroom & comfort' },
+    { label: 'Business Class', sub: 'Lie-flat seats & lounge access' },
+    { label: 'First Class', sub: 'Luxury private suite' }
+  ];
 
-async function initApplication() {
-  const [allFlights, allAirports] = await Promise.all([loadFlightsData(), loadAirportsData()]);
-  const debouncedSearch = debounce((forceSearch = false) => applyFilters(allFlights, forceSearch), 120);
+  setupSimpleMenu(inputId, dropdownId, (val) => {
+    let html = `<div class="autocomplete-header">SELECT CABIN CLASS</div>`;
+    options.forEach(opt => {
+      const active = val === opt.label ? 'active' : '';
+      html += `
+        <div class="autocomplete-option ${active}" data-val="${opt.label}">
+          <div class="autocomplete-option-info">
+            <span class="autocomplete-option-city">${opt.label}</span>
+            <span class="autocomplete-option-airport">${opt.sub}</span>
+          </div>
+        </div>`;
+    });
+    return html;
+  }, (v, inp) => {
+    inp.value = v;
+    applyFilters(allFlights);
+  });
+}
+
+// ── Application Initialization ──
+async function initApp() {
+  if (window.componentsLoadedPromise) {
+    await window.componentsLoadedPromise;
+  }
+  const { flights: allFlights, airports: allAirports } = await loadData();
+  const debouncedSearch = debounce(() => applyFilters(allFlights), 120);
 
   // Populate dynamic airline checkboxes
-  const airlineFiltersContainer = document.getElementById('airlineFilters');
-  if (airlineFiltersContainer) {
-    const uniqueAirlines = [...new Set(allFlights.map(flight => flight.airline))].sort();
-    airlineFiltersContainer.innerHTML = uniqueAirlines.map(airline => `
-      <label class="checkbox-label">
-        <input type="checkbox" class="airline-filter" value="${airline}"> ${airline}
-      </label>
+  const airlineBox = document.getElementById('airlineFilters');
+  if (airlineBox) {
+    const airlines = [...new Set(allFlights.map(f => f.airline))].sort();
+    airlineBox.innerHTML = airlines.map(a => `
+      <label class="checkbox-label"><input type="checkbox" class="airline-filter" value="${a}"> ${a}</label>
     `).join('');
   }
 
-  // Initial filter run
-  applyFilters(allFlights, false);
+  // Initial filter run & global trigger
+  applyFilters(allFlights);
+  window.triggerFlightsRefresh = () => applyFilters(allFlights);
 
-  // Setup dropdown autocompletes
+  // Dropdown Autocompletes
   ['departureFrom', 'goingTo', 'fsbFrom', 'fsbTo'].forEach(id => {
-    setupAutocomplete(id, id + 'Dropdown', allAirports, allFlights, () => debouncedSearch(false));
+    setupAutocomplete(id, id + 'Dropdown', allAirports, allFlights, debouncedSearch);
   });
 
   setupCalendarPicker('fsbDepart', 'fsbDepartDropdown', allFlights);
@@ -805,166 +515,115 @@ async function initApplication() {
   setupTravellersMenu('fsbTravellers', 'fsbTravellersDropdown', allFlights);
   setupTripTypeMenu('fsbTripType', 'fsbTripTypeDropdown', allFlights);
   setupCabinClassMenu('fsbCabin', 'fsbCabinDropdown', allFlights);
+  setupTravellersClassMenu('travellersClass', 'travellersClassDropdown', allFlights);
 
-  // Sync inputs between Hero card and Flights search bar
-  const syncInputPair = (id1, id2) => {
-    const element1 = document.getElementById(id1);
-    const element2 = document.getElementById(id2);
-    if (element1 && element2) {
-      element1.addEventListener('input', () => {
-        element2.value = element1.value;
-        debouncedSearch(false);
-      });
-      element2.addEventListener('input', () => {
-        element1.value = element2.value;
-        debouncedSearch(false);
-      });
+  // Synchronize input fields (Hero ↔ Flights Bar)
+  const syncInputs = (id1, id2) => {
+    const e1 = document.getElementById(id1), e2 = document.getElementById(id2);
+    if (e1 && e2) {
+      e1.addEventListener('input', () => { e2.value = e1.value; debouncedSearch(); });
+      e2.addEventListener('input', () => { e1.value = e2.value; debouncedSearch(); });
     }
   };
-  syncInputPair('departureFrom', 'fsbFrom');
-  syncInputPair('goingTo', 'fsbTo');
+  syncInputs('departureFrom', 'fsbFrom');
+  syncInputs('goingTo', 'fsbTo');
 
-  // Clear return date button
-  document.getElementById('fsbReturnClear')?.addEventListener('click', (event) => {
-    event.stopPropagation();
-    const returnInput = document.getElementById('fsbReturn');
-    if (returnInput) returnInput.value = '';
-    applyFilters(allFlights, false);
+  // Clear return date
+  document.getElementById('fsbReturnClear')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const ret = document.getElementById('fsbReturn');
+    if (ret) ret.value = '';
+    applyFilters(allFlights);
   });
 
-  // Hero section search button
+  // Hero search button
   document.getElementById('searchBtn')?.addEventListener('click', () => {
-    const heroFrom = document.getElementById('departureFrom');
-    const heroTo = document.getElementById('goingTo');
-    const fsbFrom = document.getElementById('fsbFrom');
-    const fsbTo = document.getElementById('fsbTo');
+    const hFrom = document.getElementById('departureFrom'), hTo = document.getElementById('goingTo');
+    const fFrom = document.getElementById('fsbFrom'), fTo = document.getElementById('fsbTo');
+    const msg = document.getElementById('resultsMsg');
 
-    if (heroFrom && fsbFrom) {
-      if (heroFrom.value) fsbFrom.value = heroFrom.value;
-      else if (fsbFrom.value) heroFrom.value = fsbFrom.value;
+    if (!hFrom?.value.trim() && !hTo?.value.trim() && !fFrom?.value.trim() && !fTo?.value.trim()) {
+      if (msg) msg.textContent = 'Please enter origin or destination city.';
+      return;
     }
 
-    if (heroTo && fsbTo) {
-      if (heroTo.value) fsbTo.value = heroTo.value;
-      else if (fsbTo.value) heroTo.value = fsbTo.value;
-    }
+    if (hFrom && fFrom) { if (hFrom.value) fFrom.value = hFrom.value; else if (fFrom.value) hFrom.value = fFrom.value; }
+    if (hTo && fTo) { if (hTo.value) fTo.value = hTo.value; else if (fTo.value) hTo.value = fTo.value; }
 
     const heroView = document.getElementById('hero-view');
     const flightsView = document.getElementById('flights-view');
-
     if (heroView) heroView.style.display = 'none';
     if (flightsView) flightsView.style.display = 'block';
 
-    applyFilters(allFlights, true);
+    applyFilters(allFlights);
     window.location.hash = '#flights';
-
     document.querySelectorAll('.nav-link').forEach(link => {
-      const route = link.dataset.route;
-      const href = link.getAttribute('href') || '';
+      const route = link.dataset.route, href = link.getAttribute('href') || '';
       link.classList.toggle('active', route === 'flights' || href.includes('flights'));
     });
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // Flights bar search button
-  document.getElementById('fsbSearchBtn')?.addEventListener('click', () => {
-    applyFilters(allFlights, true);
-  });
+  // Search & Filter event listeners
+  document.getElementById('fsbSearchBtn')?.addEventListener('click', () => applyFilters(allFlights));
+  document.getElementById('flightSearch')?.addEventListener('input', () => debouncedSearch());
+  document.getElementById('nonStop')?.addEventListener('change', () => applyFilters(allFlights));
 
-  document.getElementById('flightSearch')?.addEventListener('input', () => {
-    debouncedSearch(false);
-  });
-
-  document.getElementById('nonStop')?.addEventListener('change', () => {
-    applyFilters(allFlights, false);
-  });
-
-  // Close dropdowns when clicking outside
-  document.addEventListener('click', (event) => {
-    if (!event.target.closest('.flight-field')) {
-      document.querySelectorAll('.autocomplete-dropdown').forEach(dropdown => {
-        dropdown.classList.remove('show');
-      });
-    }
-  });
-
-  // Location swap buttons
-  const swapLocations = (fromId1, toId1, fromId2, toId2) => {
-    const fromEl1 = document.getElementById(fromId1);
-    const toEl1 = document.getElementById(toId1);
-    if (fromEl1 && toEl1) {
-      [fromEl1.value, toEl1.value] = [toEl1.value, fromEl1.value];
-    }
-
-    const fromEl2 = document.getElementById(fromId2);
-    const toEl2 = document.getElementById(toId2);
-    if (fromEl2 && toEl2) {
-      [fromEl2.value, toEl2.value] = [toEl2.value, fromEl2.value];
-    }
-
-    applyFilters(allFlights, false);
+  // Swap location buttons
+  const swap = (f1, t1, f2, t2) => {
+    const eF1 = document.getElementById(f1), eT1 = document.getElementById(t1);
+    if (eF1 && eT1) [eF1.value, eT1.value] = [eT1.value, eF1.value];
+    const eF2 = document.getElementById(f2), eT2 = document.getElementById(t2);
+    if (eF2 && eT2) [eF2.value, eT2.value] = [eT2.value, eF2.value];
+    applyFilters(allFlights);
   };
 
-  document.getElementById('swapBtn')?.addEventListener('click', () => {
-    swapLocations('departureFrom', 'goingTo', 'fsbFrom', 'fsbTo');
-  });
+  document.getElementById('swapBtn')?.addEventListener('click', () => swap('departureFrom', 'goingTo', 'fsbFrom', 'fsbTo'));
+  document.getElementById('fsbSwap')?.addEventListener('click', () => swap('fsbFrom', 'fsbTo', 'departureFrom', 'goingTo'));
 
-  document.getElementById('fsbSwap')?.addEventListener('click', () => {
-    swapLocations('fsbFrom', 'fsbTo', 'departureFrom', 'goingTo');
-  });
-
-  // Price range slider
-  document.getElementById('priceRange')?.addEventListener('input', (event) => {
+  // Price range & Currency select
+  document.getElementById('priceRange')?.addEventListener('input', (e) => {
     const priceDisplay = document.getElementById('priceValue');
-    if (priceDisplay) {
-      priceDisplay.textContent = formatPrice(parseInt(event.target.value, 10));
-    }
-    debouncedSearch(false);
+    if (priceDisplay) priceDisplay.textContent = formatPrice(parseInt(e.target.value, 10));
+    debouncedSearch();
   });
 
-  // Currency select dropdown
-  document.getElementById('currencySelect')?.addEventListener('change', (event) => {
-    currentCurrency = event.target.value;
+  document.getElementById('currencySelect')?.addEventListener('change', (e) => {
+    window.currentCurrency = e.target.value;
     const priceSlider = document.getElementById('priceRange');
     const priceDisplay = document.getElementById('priceValue');
-    if (priceSlider && priceDisplay) {
-      priceDisplay.textContent = formatPrice(parseInt(priceSlider.value, 10));
-    }
-    applyFilters(allFlights, false);
+    if (priceSlider && priceDisplay) priceDisplay.textContent = formatPrice(parseInt(priceSlider.value, 10));
+    applyFilters(allFlights);
   });
 
-  // Stop & Airline filter checkboxes
-  document.addEventListener('change', (event) => {
-    if (event.target.matches('.stop-filter, .airline-filter')) {
-      applyFilters(allFlights, false);
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('.stop-filter, .airline-filter')) applyFilters(allFlights);
+  });
+
+  // Global click outside to hide dropdowns
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.flight-field')) {
+      document.querySelectorAll('.autocomplete-dropdown').forEach(d => d.classList.remove('show'));
     }
   });
 
-  // Navigation link click routing
+  // Navigation link clicks
   document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', (event) => {
-      const route = link.dataset.route;
-      const href = link.getAttribute('href') || '';
-
+    link.addEventListener('click', (e) => {
+      const route = link.dataset.route, href = link.getAttribute('href') || '';
       if (route === 'home' || route === 'flights' || href.includes('#home') || href.includes('#flights') || href === '#') {
-        const isHeroTarget = (route === 'home' || href.includes('#home'));
-        const targetHash = isHeroTarget ? '#home' : '#flights';
+        const isHome = (route === 'home' || href.includes('#home'));
         const heroView = document.getElementById('hero-view');
         const flightsView = document.getElementById('flights-view');
-
         if (heroView && flightsView) {
-          event.preventDefault();
-          document.querySelectorAll('.nav-link').forEach(navLink => navLink.classList.remove('active'));
+          e.preventDefault();
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
           link.classList.add('active');
-
           const navToggle = document.getElementById('nav-toggle');
           if (navToggle) navToggle.checked = false;
-
-          heroView.style.display = isHeroTarget ? 'block' : 'none';
-          flightsView.style.display = isHeroTarget ? 'none' : 'block';
-
-          window.location.hash = targetHash;
+          heroView.style.display = isHome ? 'block' : 'none';
+          flightsView.style.display = isHome ? 'none' : 'block';
+          window.location.hash = isHome ? '#home' : '#flights';
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
@@ -972,5 +631,4 @@ async function initApplication() {
   });
 }
 
-// Start application
-initApplication();
+initApp();

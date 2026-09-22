@@ -1,0 +1,346 @@
+/* ==========================================
+   Special Deals & Features Component - SkyFlow
+   ========================================== */
+
+.deals-section {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  padding: 3.5rem 1.5rem 5rem;
+  color: #0f172a;
+  overflow: hidden;
+}
+
+.deals-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+}
+
+.section-title-dark {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  color: #0f2640;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.25rem;
+}
+
+/* Row 1: 2 Deal Banner Cards Grid */
+.deals-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.deal-card {
+  position: relative;
+  height: 250px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.deal-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.deal-card:hover .deal-bg-img {
+  transform: scale(1.05);
+}
+
+.deal-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 38, 64, 0.3) 0%, rgba(15, 38, 64, 0.82) 100%);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  color: #ffffff;
+}
+
+.deal-title {
+  font-size: clamp(1.1rem, 2.2vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.deal-btn {
+  display: inline-block;
+  padding: 0.65rem 1.6rem;
+  background: #ffffff;
+  color: #0f2640;
+  border-radius: 99px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.deal-btn:hover {
+  transform: translateY(-2px);
+  background: #f8fafc;
+}
+
+/* Row 2: Trust Features + Testimonials Grid */
+.info-row-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 2.5rem;
+  width: 100%;
+}
+
+.info-col {
+  min-width: 0;
+}
+
+.info-row-grid > .info-col:first-child {
+  flex: 0 0 62%;
+  max-width: 62%;
+  min-width: 0;
+}
+
+.info-row-grid > .info-col:last-child {
+  flex: 0 0 34%;
+  max-width: 34%;
+  min-width: 0;
+}
+
+.info-heading {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f2640;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.25rem;
+}
+
+/* Trust features grid list (3 columns side-by-side) */
+.features-flex {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.green-badge { background: #ecfdf5; }
+.blue-badge { background: #f0f9ff; }
+.purple-badge { background: #faf5ff; }
+
+.feature-text h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f2640;
+  margin-bottom: 0.25rem;
+}
+
+.feature-text p {
+  font-size: 0.8rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Testimonial Slider Container */
+.testimonial-slider-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  position: relative;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.04);
+}
+
+.testimonial-track {
+  display: flex;
+  width: 900%; /* 9 slides (8 unique + 1 loop clone) */
+  animation-name: slideTestimonials;
+  animation-duration: 16s;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  animation-iteration-count: infinite;
+  animation-direction: normal;
+  animation-play-state: running;
+  will-change: transform;
+}
+
+.testimonial-card {
+  width: 11.111111%; /* 100% of visible container (100% / 9) */
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 24px;
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.15rem;
+  box-sizing: border-box;
+  min-height: 145px;
+}
+
+/* Keyframe: Continuous smooth 2-second per card infinite loop */
+@keyframes slideTestimonials {
+  0%, 9.375% {
+    transform: translateX(0%);
+  }
+  12.5%, 21.875% {
+    transform: translateX(-11.111111%);
+  }
+  25%, 34.375% {
+    transform: translateX(-22.222222%);
+  }
+  37.5%, 46.875% {
+    transform: translateX(-33.333333%);
+  }
+  50%, 59.375% {
+    transform: translateX(-44.444444%);
+  }
+  62.5%, 71.875% {
+    transform: translateX(-55.555556%);
+  }
+  75%, 84.375% {
+    transform: translateX(-66.666667%);
+  }
+  87.5%, 96.875% {
+    transform: translateX(-77.777778%);
+  }
+  99.9% {
+    transform: translateX(-88.888889%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.testimonial-author {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: center;
+  flex-shrink: 0;
+  width: 75px;
+}
+
+.author-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.author-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f2640;
+  line-height: 1.2;
+}
+
+.testimonial-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.testimonial-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f2640;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.testimonial-quote {
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.45;
+  font-style: normal;
+}
+
+.star-rating {
+  color: #f59e0b;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  margin-top: 0.15rem;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+  .features-flex {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .deals-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .info-row-grid {
+    flex-direction: column;
+  }
+  .info-row-grid > .info-col:first-child,
+  .info-row-grid > .info-col:last-child {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .deals-section {
+    padding: 2.5rem 1rem;
+  }
+  .deal-card {
+    height: 210px;
+  }
+  .features-flex {
+    grid-template-columns: 1fr;
+  }
+  .testimonial-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+    gap: 0.65rem;
+    min-height: 185px;
+  }
+  .testimonial-author {
+    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .author-avatar {
+    width: 44px;
+    height: 44px;
+  }
+  .testimonial-content {
+    align-items: center;
+  }
+}

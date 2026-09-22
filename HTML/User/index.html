@@ -4,12 +4,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SkyFlow – Airline Management System</title>
+  <title>SKYFLOW – Airline Management System</title>
+
+  <link rel="icon" href="../../images/navbar logo.gif" type="image/gif">
 
   <!-- Global & Component Stylesheets -->
   <link rel="stylesheet" href="../../CSS/User/style.css">
   <link rel="stylesheet" href="../../CSS/globalcomp/navbar.css">
   <link rel="stylesheet" href="../../CSS/Landingcomp/hero.css">
+  <link rel="stylesheet" href="../../CSS/Landingcomp/destination.css">
+  <link rel="stylesheet" href="../../CSS/Landingcomp/deals.css">
+  <link rel="stylesheet" href="../../CSS/Landingcomp/wanderlust.css">
   <link rel="stylesheet" href="../../CSS/flightscomp/flights.css">
   <link rel="stylesheet" href="../../CSS/globalcomp/footer.css">
   <link rel="stylesheet" href="../../CSS/User/signup.css">
@@ -17,91 +22,32 @@
   <script src="../../Javascript/User/auth.js"></script>
 </head>
 
-<body>
-  <!-- Dynamic Component Containers -->
-  <div id="navbar-container"></div>
-  <main id="app-content"></main>
-  <div id="footer-container"></div>
+<!-- Global Navbar Container -->
+<div id="navbar-container"></div>
 
-  <!-- JavaScript -->
-  <script>
-    async function loadComponent(url, containerId) {
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to load ${url}`);
-        const html = await response.text();
-        document.getElementById(containerId).innerHTML = html;
-      } catch (error) {
-        console.error('Error loading component:', error);
-      }
-    }
+<!-- Dynamic Component Containers -->
+<main id="app-content">
+  <!-- Hero View (Hero Section + Top Destinations + Special Deals + Wanderlust Banner) -->
+  <div id="hero-view">
+    <div id="hero-container"></div>
+    <div id="destination-container"></div>
+    <div id="deals-container"></div>
+    <div id="wanderlust-container"></div>
+  </div>
 
-    function handleRouteView() {
-      const hash = window.location.hash;
-      const heroView = document.getElementById('hero-view');
-      const flightsView = document.getElementById('flights-view');
+  <!-- Flights View -->
+  <div id="flights-view" style="display: none;">
+    <div id="flights-container"></div>
+  </div>
+</main>
 
-      if (hash === '#flights') {
-        if (heroView) heroView.style.display = 'none';
-        if (flightsView) flightsView.style.display = 'block';
-        if (typeof initSkyFlowPage === 'function') initSkyFlowPage('flights');
-      } else {
-        if (heroView) heroView.style.display = 'block';
-        if (flightsView) flightsView.style.display = 'none';
-        if (typeof initSkyFlowPage === 'function') initSkyFlowPage('home');
-      }
+<!-- Global Footer Container -->
+<div id="footer-container"></div>
 
-      if (document.getElementById('nav-toggle')) {
-        document.getElementById('nav-toggle').checked = false;
-      }
-    }
-
-    async function initApp() {
-      if ('scrollRestoration' in history) {
-        history.scrollRestoration = 'manual';
-      }
-
-      // Load global components
-      await loadComponent('globalcomp/navbar.html', 'navbar-container');
-      await loadComponent('globalcomp/footer.html', 'footer-container');
-
-      if (typeof initSkyFlowPage === 'function') {
-        initSkyFlowPage(window.location.hash === '#flights' ? 'flights' : 'home');
-      }
-
-      // Load main page contents (hero and flights sections)
-      try {
-        const heroResponse = await fetch('Landingcomp/hero.html');
-        if (!heroResponse.ok) throw new Error('Failed to load hero section');
-        const heroHtml = await heroResponse.text();
-
-        const flightsResponse = await fetch('flightscomp/flights.html');
-        if (!flightsResponse.ok) throw new Error('Failed to load flights section');
-        const flightsHtml = await flightsResponse.text();
-
-        document.getElementById('app-content').innerHTML = `
-          <div id="hero-view">${heroHtml}</div>
-          <div id="flights-view" style="display: none;">${flightsHtml}</div>
-        `;
-
-        // Handle initial view based on hash
-        handleRouteView();
-
-        // Listen for hash changes
-        window.addEventListener('hashchange', handleRouteView);
-
-        // Load flights script to wire up search filters and render flights
-        const script = document.createElement('script');
-        script.src = '../../Javascript/User/flights.js';
-        document.body.appendChild(script);
-      } catch (error) {
-        console.error('Error loading main page content:', error);
-      }
-    }
-
-    // Initialize when DOM is ready
-    window.addEventListener('DOMContentLoaded', initApp);
-  </script>
+<!-- JavaScript -->
+<script src="../../Javascript/User/index.js" defer></script>
+<script src="../../Javascript/User/flights.js" defer></script>
+<script src="../../Javascript/User/AI_Assistence.js" defer></script>
 </body>
 
 </html>
