@@ -8,6 +8,7 @@
   background: #ffffff;
   padding: 3.5rem 1.5rem 5rem;
   color: #0f172a;
+  overflow: hidden;
 }
 
 .deals-container {
@@ -98,16 +99,23 @@
   justify-content: space-between;
   align-items: start;
   gap: 2.5rem;
+  width: 100%;
+}
+
+.info-col {
+  min-width: 0;
 }
 
 .info-row-grid > .info-col:first-child {
   flex: 0 0 62%;
   max-width: 62%;
+  min-width: 0;
 }
 
 .info-row-grid > .info-col:last-child {
   flex: 0 0 34%;
   max-width: 34%;
+  min-width: 0;
 }
 
 .info-heading {
@@ -161,6 +169,8 @@
 /* Testimonial Slider Container */
 .testimonial-slider-container {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   border-radius: 24px;
   position: relative;
@@ -169,12 +179,17 @@
 
 .testimonial-track {
   display: flex;
-  width: 500%; /* 5 slides (4 unique + 1 loop clone) */
-  animation: slideTestimonials 8s infinite cubic-bezier(0.25, 1, 0.5, 1);
+  width: 900%; /* 9 slides (8 unique + 1 loop clone) */
+  animation: slideTestimonials 16s infinite cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.testimonial-slider-container:hover .testimonial-track {
+  animation-play-state: paused;
 }
 
 .testimonial-card {
-  width: 20%; /* 100% of visible container */
+  width: 11.111111%; /* 100% of visible container (100% / 9) */
   flex-shrink: 0;
   background: #ffffff;
   border: 1px solid #edf2f7;
@@ -187,22 +202,34 @@
   min-height: 145px;
 }
 
-/* Keyframe: Slide in from right to left every 2 seconds in an infinite loop */
+/* Keyframe: Smooth slide every 2 seconds in an infinite loop (16s total for 8 cards) */
 @keyframes slideTestimonials {
-  0%, 21% {
+  0%, 8.75% {
     transform: translateX(0%);
   }
-  25%, 46% {
-    transform: translateX(-20%);
+  12.5%, 21.25% {
+    transform: translateX(-11.111111%);
   }
-  50%, 71% {
-    transform: translateX(-40%);
+  25%, 33.75% {
+    transform: translateX(-22.222222%);
   }
-  75%, 96% {
-    transform: translateX(-60%);
+  37.5%, 46.25% {
+    transform: translateX(-33.333333%);
   }
-  98.5%, 99.5% {
-    transform: translateX(-80%);
+  50%, 58.75% {
+    transform: translateX(-44.444444%);
+  }
+  62.5%, 71.25% {
+    transform: translateX(-55.555556%);
+  }
+  75%, 83.75% {
+    transform: translateX(-66.666667%);
+  }
+  87.5%, 96.25% {
+    transform: translateX(-77.777778%);
+  }
+  99.5% {
+    transform: translateX(-88.888889%);
   }
   100% {
     transform: translateX(0%);
@@ -262,75 +289,6 @@
   margin-top: 0.15rem;
 }
 
-/* Row 3: Bottom Full Width CTA Banner */
-.wanderlust-cta-banner {
-  background: #dbefea;
-  border-radius: 28px;
-  padding: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  overflow: hidden;
-}
-
-.cta-left-content {
-  flex: 1;
-  max-width: 620px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.cta-title {
-  font-size: clamp(1.6rem, 3.2vw, 2.3rem);
-  font-weight: 900;
-  color: #0f2640;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-.cta-desc {
-  font-size: 0.95rem;
-  color: #475569;
-  line-height: 1.6;
-}
-
-.cta-pill-btn {
-  display: inline-block;
-  padding: 0.9rem 2.2rem;
-  background: #38bdf8;
-  color: #ffffff;
-  border-radius: 99px;
-  font-size: 0.92rem;
-  font-weight: 800;
-  text-decoration: none;
-  letter-spacing: 0.03em;
-  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.cta-pill-btn:hover {
-  transform: translateY(-2px);
-  background: #0284c7;
-}
-
-.cta-right-img-box {
-  width: 320px;
-  height: 220px;
-  border-radius: 20px;
-  overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.cta-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 /* Responsive Media Queries */
 @media (max-width: 992px) {
   .deals-cards-grid {
@@ -343,15 +301,6 @@
   .info-row-grid > .info-col:last-child {
     flex: 1 1 100%;
     max-width: 100%;
-  }
-  .wanderlust-cta-banner {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 2rem;
-  }
-  .cta-right-img-box {
-    width: 100%;
-    height: 240px;
   }
 }
 

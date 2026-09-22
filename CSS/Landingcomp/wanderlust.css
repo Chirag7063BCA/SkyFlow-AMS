@@ -1,0 +1,197 @@
+/* ==========================================
+   Wanderlust CTA Banner Component - SkyFlow
+   15-Year Senior Frontend Design Standards
+   ========================================== */
+
+.wanderlust-section {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  padding: 0 1.5rem 5rem;
+  color: #0f172a;
+  overflow: hidden;
+}
+
+.wanderlust-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.wanderlust-cta-banner {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(135deg, #e0f2fe 0%, #dbefea 50%, #e0f2fe 100%);
+  background-size: 200% 200%;
+  animation: bannerGradientGlow 12s ease infinite alternate;
+  border-radius: 28px;
+  padding: 3.25rem 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5rem;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(15, 38, 64, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-sizing: border-box;
+}
+
+@keyframes bannerGradientGlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.cta-left-content {
+  flex: 1;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.1rem;
+  z-index: 2;
+}
+
+.cta-badge {
+  display: inline-block;
+  padding: 0.35rem 0.95rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(2, 132, 199, 0.2);
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #0284c7;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.cta-title {
+  font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+  font-weight: 900;
+  color: #0f2640;
+  line-height: 1.22;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.cta-desc {
+  font-size: 0.96rem;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.cta-btn-group {
+  margin-top: 0.4rem;
+}
+
+.cta-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.95rem 2.2rem;
+  background: #38bdf8;
+  color: #ffffff;
+  border-radius: 99px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta-pill-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.cta-pill-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  background: #0284c7;
+  box-shadow: 0 14px 30px rgba(2, 132, 199, 0.45);
+}
+
+.cta-pill-btn:hover svg {
+  transform: translateX(4px);
+}
+
+.cta-right-img-box {
+  position: relative;
+  width: 340px;
+  height: 230px;
+  border-radius: 22px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wanderlust-cta-banner:hover .cta-right-img-box {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.cta-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wanderlust-cta-banner:hover .cta-img {
+  transform: scale(1.06);
+}
+
+.cta-img-badge {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.4rem 0.85rem;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f2640;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 992px) {
+  .wanderlust-cta-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 2.25rem 2rem;
+  }
+  .cta-left-content {
+    max-width: 100%;
+  }
+  .cta-right-img-box {
+    width: 100%;
+    height: 240px;
+  }
+}
+
+@media (max-width: 640px) {
+  .wanderlust-section {
+    padding: 0 1rem 3.5rem;
+  }
+  .wanderlust-cta-banner {
+    padding: 1.75rem 1.25rem;
+    border-radius: 22px;
+  }
+  .cta-title {
+    font-size: 1.45rem;
+  }
+  .cta-pill-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.85rem 1.5rem;
+  }
+}

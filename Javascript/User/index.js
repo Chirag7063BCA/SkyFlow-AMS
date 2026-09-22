@@ -21,6 +21,7 @@ window.componentsLoadedPromise = (async () => {
     loadComponent('Landingcomp/hero.html', 'hero-container'),
     loadComponent('Landingcomp/destination.html', 'destination-container'),
     loadComponent('Landingcomp/deals.html', 'deals-container'),
+    loadComponent('Landingcomp/wanderlust.html', 'wanderlust-container'),
     loadComponent('flightscomp/flights.html', 'flights-container'),
     loadComponent('globalcomp/footer.html', 'footer-container')
   ]);
