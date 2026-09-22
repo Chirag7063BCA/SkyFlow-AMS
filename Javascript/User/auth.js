@@ -1,47 +1,27 @@
-/* SkyFlow AMS - Authentication & Navbar Controller (Simple & Compact) */
+/* SkyFlow AMS - Authentication & Navbar Controller */
 const GOOGLE_CLIENT_ID = "630801472891-mqjmbt925glbg0do6qd3ei9c2adsuvei.apps.googleusercontent.com";
 
-// Check if page is inside a subdirectory
 function isSubdir() {
-  return window.location.pathname.includes('/help/') ||
-         window.location.pathname.includes('/mybookings/') ||
-         window.location.pathname.includes('/Track') ||
-         window.location.pathname.includes('/AI_Assistence/');
+  const p = window.location.pathname;
+  return p.includes('/help/') || p.includes('/mybookings/') || p.includes('/Track') || p.includes('/AI_Assistence/');
 }
 
-// Inject Auth Drawer HTML dynamically if missing
 function ensureAuthDrawer() {
   if (document.getElementById('signupDrawer')) return;
-
-  const drawerHTML = `
-  <div id="signupDrawer" class="signup-drawer">
-    <div id="drawerOverlay" class="drawer-overlay"></div>
-    <div class="drawer-panel">
-      <div class="drawer-header">
-        <div class="drawer-brand">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 15.5L11.5 3l-1.8 8.2L21 9.5 8.5 21l2.3-8.5L3 15.5Z" fill="#2563eb"/></svg>
-          <h2 id="drawerTitle">Welcome Back</h2>
-        </div>
-        <button type="button" id="closeDrawerBtn" class="close-btn">&times;</button>
-      </div>
-      <div class="auth-tabs">
-        <button type="button" id="signinTab" class="tab-btn active" onclick="switchTab('signin')">Sign In</button>
-        <button type="button" id="signupTab" class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
-      </div>
+  const html = `<div id="signupDrawer" class="signup-drawer"><div id="drawerOverlay" class="drawer-overlay"></div><div class="drawer-panel">
+      <div class="drawer-header"><div class="drawer-brand"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 15.5L11.5 3l-1.8 8.2L21 9.5 8.5 21l2.3-8.5L3 15.5Z" fill="#2563eb"/></svg><h2 id="drawerTitle">Welcome Back</h2></div><button type="button" id="closeDrawerBtn" class="close-btn">&times;</button></div>
+      <div class="auth-tabs"><button type="button" id="signinTab" class="tab-btn active" onclick="switchTab('signin')">Sign In</button><button type="button" id="signupTab" class="tab-btn" onclick="switchTab('signup')">Sign Up</button></div>
       <form id="signinForm" class="auth-form">
-        <div class="form-group"><label for="signinEmail">Email Address</label><input type="email" id="signinEmail" placeholder="name@example.com" required></div>
-        <div class="form-group"><label for="signinPassword">Password</label><input type="password" id="signinPassword" placeholder="••••••••" required></div>
-        <div class="form-options">
-          <label class="remember-me"><input type="checkbox" id="rememberMe"> <span>Remember me</span></label>
-          <a href="#" class="forgot-link" onclick="alert('Password reset link sent to your email!'); return false;">Forgot password?</a>
-        </div>
+        <div class="form-group"><label>Email Address</label><input type="email" id="signinEmail" placeholder="name@example.com" required></div>
+        <div class="form-group"><label>Password</label><input type="password" id="signinPassword" placeholder="••••••••" required></div>
+        <div class="form-options"><label class="remember-me"><input type="checkbox" id="rememberMe"> Remember me</label><a href="#" class="forgot-link" onclick="alert('Password reset link sent to your email!'); return false;">Forgot password?</a></div>
         <button type="submit" class="submit-btn">Sign In</button>
       </form>
-      <form id="signupForm" class="auth-form" style="display: none;">
-        <div class="form-group"><label for="fullName">Full Name</label><input type="text" id="fullName" placeholder="Enter your full name" required></div>
-        <div class="form-group"><label for="signupEmail">Email Address</label><input type="email" id="signupEmail" placeholder="Enter your email address" required></div>
-        <div class="form-group"><label for="signupPassword">Password</label><input type="password" id="signupPassword" placeholder="Enter your password" required minlength="6"></div>
-        <div class="form-group"><label for="confirmPassword">Confirm Password</label><input type="password" id="confirmPassword" placeholder="Re-enter your password" required minlength="6"></div>
+      <form id="signupForm" class="auth-form" style="display:none;">
+        <div class="form-group"><label>Full Name</label><input type="text" id="fullName" placeholder="Enter your full name" required></div>
+        <div class="form-group"><label>Email Address</label><input type="email" id="signupEmail" placeholder="Enter your email address" required></div>
+        <div class="form-group"><label>Password</label><input type="password" id="signupPassword" placeholder="Enter password" required minlength="6"></div>
+        <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPassword" placeholder="Re-enter password" required minlength="6"></div>
         <button type="submit" class="submit-btn">Create Account</button>
       </form>
       <div class="divider"><span>OR</span></div>
@@ -50,126 +30,68 @@ function ensureAuthDrawer() {
         <span>Continue with Google</span>
       </button>
       <p id="authSwitchFooter" class="footer-text">Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a></p>
-      <div class="admin-panel-access">
-        <button type="button" class="admin-access-btn" onclick="promptAdminPin()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Admin Panel</span>
-        </button>
-      </div>
-    </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend', drawerHTML);
+      <div class="admin-panel-access"><button type="button" class="admin-access-btn" onclick="promptAdminPin()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Admin Panel</span></button></div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
 
-  // Bind Sign In Form
-  const signinForm = document.getElementById('signinForm');
-  if (signinForm) {
-    signinForm.onsubmit = function(e) {
-      e.preventDefault();
-      const email = document.getElementById('signinEmail').value;
-      loginUser({ name: email.split('@')[0], email: email });
-    };
-  }
-
-  // Bind Sign Up Form
-  const signupForm = document.getElementById('signupForm');
-  if (signupForm) {
-    signupForm.onsubmit = function(e) {
-      e.preventDefault();
-      const name = document.getElementById('fullName').value || 'Traveler';
-      const email = document.getElementById('signupEmail').value || 'user@example.com';
-      const pass = document.getElementById('signupPassword').value;
-      const confirmPass = document.getElementById('confirmPassword').value;
-
-      if (pass !== confirmPass) {
-        alert("Passwords do not match! Please try again.");
-        return;
-      }
-      loginUser({ name: name, email: email });
-    };
-  }
+  document.getElementById('signinForm').onsubmit = function(e) {
+    e.preventDefault();
+    loginUser({ name: document.getElementById('signinEmail').value.split('@')[0], email: document.getElementById('signinEmail').value });
+  };
+  document.getElementById('signupForm').onsubmit = function(e) {
+    e.preventDefault();
+    if (document.getElementById('signupPassword').value !== document.getElementById('confirmPassword').value) { alert("Passwords do not match!"); return; }
+    loginUser({ name: document.getElementById('fullName').value || 'Traveler', email: document.getElementById('signupEmail').value });
+  };
 }
 
-// Prompt PIN for Admin Panel access
 function promptAdminPin() {
   const pin = prompt("Enter Admin Access PIN:");
-  if (pin === "6969") {
-    window.location.href = isSubdir() ? '../../Admin/index.html' : '../Admin/index.html';
-  } else if (pin !== null) {
-    alert("Incorrect PIN! Access denied.");
-  }
+  if (pin === "6969") window.location.href = isSubdir() ? '../../Admin/index.html' : '../Admin/index.html';
+  else if (pin !== null) alert("Incorrect PIN! Access denied.");
 }
 
-// Drawer Visibility Controls
 function openDrawer(tab) {
   ensureAuthDrawer();
-  const drawer = document.getElementById('signupDrawer');
-  if (drawer) drawer.classList.add('active');
+  document.getElementById('signupDrawer')?.classList.add('active');
   switchTab(tab || 'signin');
 }
 
 function closeDrawer() {
-  const drawer = document.getElementById('signupDrawer');
-  if (drawer) drawer.classList.remove('active');
+  document.getElementById('signupDrawer')?.classList.remove('active');
 }
 
-// Switch Tab between Sign In and Sign Up
 function switchTab(mode) {
   const isSignIn = (mode === 'signin');
-  const signinTab = document.getElementById('signinTab');
-  const signupTab = document.getElementById('signupTab');
-  const signinForm = document.getElementById('signinForm');
-  const signupForm = document.getElementById('signupForm');
-  const title = document.getElementById('drawerTitle');
-  const footer = document.getElementById('authSwitchFooter');
-
-  if (signinTab) signinTab.className = isSignIn ? 'tab-btn active' : 'tab-btn';
-  if (signupTab) signupTab.className = isSignIn ? 'tab-btn' : 'tab-btn active';
-  if (signinForm) signinForm.style.display = isSignIn ? 'flex' : 'none';
-  if (signupForm) signupForm.style.display = isSignIn ? 'none' : 'flex';
-  if (title) title.textContent = isSignIn ? 'Welcome Back' : 'Create Account';
-  if (footer) {
-    if (isSignIn) {
-      footer.innerHTML = `Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>`;
-    } else {
-      footer.innerHTML = `Already have an account? <a href="#" onclick="switchTab('signin'); return false;">Sign in</a>`;
-    }
-  }
+  document.getElementById('signinTab').className = isSignIn ? 'tab-btn active' : 'tab-btn';
+  document.getElementById('signupTab').className = isSignIn ? 'tab-btn' : 'tab-btn active';
+  document.getElementById('signinForm').style.display = isSignIn ? 'flex' : 'none';
+  document.getElementById('signupForm').style.display = isSignIn ? 'none' : 'flex';
+  document.getElementById('drawerTitle').textContent = isSignIn ? 'Welcome Back' : 'Create Account';
+  document.getElementById('authSwitchFooter').innerHTML = isSignIn
+    ? `Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>`
+    : `Already have an account? <a href="#" onclick="switchTab('signin'); return false;">Sign in</a>`;
 }
 
-// Handle Google OAuth 2.0 Single Sign-On
 function handleGoogleLogin() {
-  if (window.location.protocol === 'file:' || !window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+  if (location.protocol === 'file:' || !window.google?.accounts?.oauth2) {
     loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" });
     return;
   }
-
   const client = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: 'email profile openid',
+    client_id: GOOGLE_CLIENT_ID, scope: 'email profile openid',
     callback: function(res) {
-      if (res && res.access_token) {
-        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: 'Bearer ' + res.access_token }
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(u) {
-          loginUser({
-            name: u.name || u.email.split('@')[0],
-            email: u.email,
-            picture: u.picture
-          });
-        })
-        .catch(function() {
-          loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" });
-        });
+      if (res?.access_token) {
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + res.access_token } })
+          .then(r => r.json())
+          .then(u => loginUser({ name: u.name || u.email.split('@')[0], email: u.email, picture: u.picture }))
+          .catch(() => loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" }));
       }
     }
   });
-
   client.requestAccessToken();
 }
 
-// Login & Logout Session Helpers
 function loginUser(userData) {
   localStorage.setItem('skyflow_user', JSON.stringify(userData));
   updateNavbarUI();
@@ -181,62 +103,38 @@ function logoutUser() {
   updateNavbarUI();
 }
 
-// Update Navbar User Profile Avatar & Dropdown
 function updateNavbarUI() {
   const navActions = document.getElementById('navActions');
   if (!navActions) return;
-
   let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem('skyflow_user'));
-  } catch (e) {
-    user = null;
-  }
+  try { user = JSON.parse(localStorage.getItem('skyflow_user')); } catch (e) { user = null; }
 
-  if (user && user.email) {
+  if (user?.email) {
     const initial = (user.name ? user.name[0] : 'U').toUpperCase();
     const bookingsLink = isSubdir() ? '../mybookings/mybookings.html' : 'mybookings/mybookings.html';
-
-    navActions.innerHTML = `
-      <div class="user-profile-menu" id="userProfileMenu">
-        <button type="button" class="user-avatar-btn" id="userAvatarBtn">
-          <div class="user-avatar-circle">${initial}</div>
-        </button>
+    navActions.innerHTML = `<div class="user-profile-menu" id="userProfileMenu">
+        <button type="button" class="user-avatar-btn" id="userAvatarBtn"><div class="user-avatar-circle">${initial}</div></button>
         <div class="user-dropdown-menu" id="userDropdownMenu">
-          <div class="user-dropdown-header">
-            <div class="user-dropdown-avatar">${initial}</div>
-            <div class="user-dropdown-details">
-              <span class="user-dropdown-name">${user.name || 'User'}</span>
-              <span class="user-dropdown-email">${user.email}</span>
-            </div>
-          </div>
+          <div class="user-dropdown-header"><div class="user-dropdown-avatar">${initial}</div><div class="user-dropdown-details"><span class="user-dropdown-name">${user.name || 'User'}</span><span class="user-dropdown-email">${user.email}</span></div></div>
           <div class="user-dropdown-divider"></div>
           <a href="${bookingsLink}" class="user-dropdown-link">My Bookings</a>
           <button type="button" class="user-dropdown-link logout-btn" id="logoutBtn">Sign Out</button>
         </div>
       </div>`;
   } else {
-    navActions.innerHTML = `
-      <a href="#" class="btn-signin" id="openSignupBtn" onclick="openDrawer(); return false;" title="Sign In / Join" aria-label="Sign In / Join">
-        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    navActions.innerHTML = `<a href="#" class="btn-signin" id="openSignupBtn" onclick="openDrawer(); return false;" title="Sign In / Join" aria-label="Sign In / Join">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </a>`;
   }
 }
 
-// Page Navigation Setup
 function initSkyFlowPage(activeRoute) {
   ensureAuthDrawer();
   const sub = isSubdir();
-
   const logoImg = document.getElementById('navbarLogoImg');
-  if (logoImg) {
-    logoImg.src = sub ? '../../../images/navbar logo.gif' : '../../images/navbar logo.gif';
-  }
-
+  if (logoImg) logoImg.src = sub ? '../../../images/navbar logo.gif' : '../../images/navbar logo.gif';
   const logoLink = document.querySelector('.navbar-logo');
-  if (logoLink) {
-    logoLink.href = sub ? '../index.html' : 'index.html';
-  }
+  if (logoLink) logoLink.href = sub ? '../index.html' : 'index.html';
 
   const routes = {
     home: sub ? '../index.html#home' : '#home',
@@ -246,54 +144,31 @@ function initSkyFlowPage(activeRoute) {
     help: sub ? '../help/help.html' : 'help/help.html'
   };
 
-  const links = document.querySelectorAll('a[data-route]');
-  links.forEach(function(link) {
+  document.querySelectorAll('a[data-route]').forEach(link => {
     const route = link.dataset.route;
-    if (routes[route]) {
-      link.href = routes[route];
-    }
+    if (routes[route]) link.href = routes[route];
     link.classList.toggle('active', route === activeRoute);
   });
-
   updateNavbarUI();
 }
 
-// Scroll Transition for Header Navbar
 function handleGlobalNavbarScroll() {
   const header = document.querySelector('.site-header');
-  if (header) {
-    if (window.scrollY > 80) {
-      header.classList.add('scrolled');
-    } else {
-      header.classList.remove('scrolled');
-    }
-  }
+  if (header) header.classList.toggle('scrolled', window.scrollY > 80);
 }
 
 window.addEventListener('scroll', handleGlobalNavbarScroll);
 
-// Event Listeners for Drawer & Dropdown
 document.addEventListener('click', function(e) {
-  if (e.target.closest('#openSignupBtn') || e.target.closest('.btn-signin')) {
-    e.preventDefault();
-    openDrawer('signin');
-  }
-  if (e.target.closest('#closeDrawerBtn') || e.target.closest('#drawerOverlay')) {
-    e.preventDefault();
-    closeDrawer();
-  }
+  if (e.target.closest('#openSignupBtn') || e.target.closest('.btn-signin')) { e.preventDefault(); openDrawer('signin'); }
+  if (e.target.closest('#closeDrawerBtn') || e.target.closest('#drawerOverlay')) { e.preventDefault(); closeDrawer(); }
   if (e.target.closest('#userAvatarBtn')) {
     e.preventDefault();
-    const menu = document.getElementById('userDropdownMenu');
-    if (menu) menu.classList.toggle('active');
+    document.getElementById('userDropdownMenu')?.classList.toggle('active');
   } else if (!e.target.closest('#userProfileMenu')) {
-    const menu = document.getElementById('userDropdownMenu');
-    if (menu) menu.classList.remove('active');
+    document.getElementById('userDropdownMenu')?.classList.remove('active');
   }
-  if (e.target.closest('#logoutBtn')) {
-    e.preventDefault();
-    logoutUser();
-  }
+  if (e.target.closest('#logoutBtn')) { e.preventDefault(); logoutUser(); }
   if (e.target.closest('.nav-link')) {
     const navToggle = document.getElementById('nav-toggle');
     if (navToggle) navToggle.checked = false;
@@ -303,8 +178,7 @@ document.addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeDrawer();
-    const menu = document.getElementById('userDropdownMenu');
-    if (menu) menu.classList.remove('active');
+    document.getElementById('userDropdownMenu')?.classList.remove('active');
   }
 });
 
