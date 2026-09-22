@@ -180,12 +180,13 @@
 .testimonial-track {
   display: flex;
   width: 900%; /* 9 slides (8 unique + 1 loop clone) */
-  animation: slideTestimonials 16s infinite cubic-bezier(0.16, 1, 0.3, 1);
+  animation-name: slideTestimonials;
+  animation-duration: 16s;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  animation-iteration-count: infinite;
+  animation-direction: normal;
+  animation-play-state: running;
   will-change: transform;
-}
-
-.testimonial-slider-container:hover .testimonial-track {
-  animation-play-state: paused;
 }
 
 .testimonial-card {
@@ -202,33 +203,33 @@
   min-height: 145px;
 }
 
-/* Keyframe: Smooth slide every 2 seconds in an infinite loop (16s total for 8 cards) */
+/* Keyframe: Continuous smooth 2-second per card infinite loop */
 @keyframes slideTestimonials {
-  0%, 8.75% {
+  0%, 9.375% {
     transform: translateX(0%);
   }
-  12.5%, 21.25% {
+  12.5%, 21.875% {
     transform: translateX(-11.111111%);
   }
-  25%, 33.75% {
+  25%, 34.375% {
     transform: translateX(-22.222222%);
   }
-  37.5%, 46.25% {
+  37.5%, 46.875% {
     transform: translateX(-33.333333%);
   }
-  50%, 58.75% {
+  50%, 59.375% {
     transform: translateX(-44.444444%);
   }
-  62.5%, 71.25% {
+  62.5%, 71.875% {
     transform: translateX(-55.555556%);
   }
-  75%, 83.75% {
+  75%, 84.375% {
     transform: translateX(-66.666667%);
   }
-  87.5%, 96.25% {
+  87.5%, 96.875% {
     transform: translateX(-77.777778%);
   }
-  99.5% {
+  99.9% {
     transform: translateX(-88.888889%);
   }
   100% {

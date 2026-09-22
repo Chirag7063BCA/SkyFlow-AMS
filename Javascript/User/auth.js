@@ -1,13 +1,16 @@
-/* ==========================================================================
-   SkyFlow AMS - Authentication & Navbar Controller (Compact & Shared)
-   File: Javascript/User/auth.js
-   ========================================================================== */
-const GOOGLE_CLIENT_ID = "630801472891-mqjmbt925glbg0do6qd3ei9c2adsuvei.apps.googleusercontent.com";
+/* SkyFlow AMS - Authentication & Global Navbar Controller */
 
-// Helper: Detect if current page is in a subdirectory
+// Global handler to suppress third-party browser extension connection errors
+window.addEventListener('unhandledrejection', (event) => {
+  const msg = String(event.reason?.message || event.reason || '');
+  if (msg.includes('Could not establish connection') || msg.includes('Extension context') || msg.includes('message channel closed')) {
+    event.preventDefault();
+  }
+});
+
+const GOOGLE_CLIENT_ID = "630801472891-mqjmbt925glbg0do6qd3ei9c2adsuvei.apps.googleusercontent.com";
 const isSubdir = () => /\/(help|mybookings|Track%20Flight|Track Flight|AI_Assistence)\//i.test(window.location.pathname);
 
-/* 1. Dynamic Auth Drawer Injection & Admin Access */
 function ensureAuthDrawer() {
   if (document.getElementById('signupDrawer')) return;
   document.body.insertAdjacentHTML('beforeend', `
@@ -55,7 +58,31 @@ function ensureAuthDrawer() {
         </div>
       </div>
     </div>`);
-  bindFormListeners();
+
+  document.getElementById('signinForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('signinEmail')?.value.trim();
+    if (email) loginUser({ name: email.split('@')[0], email });
+  });
+
+  document.getElementById('signupForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('fullName')?.value.trim() || 'Traveler';
+    const email = document.getElementById('signupEmail')?.value.trim() || 'user@example.com';
+    const pass = document.getElementById('signupPassword')?.value;
+    const confirmPass = document.getElementById('confirmPassword')?.value;
+
+    if (pass && confirmPass && pass !== confirmPass) {
+      alert("Passwords do not match! Please check and try again.");
+      document.getElementById('confirmPassword')?.focus();
+      return;
+    }
+    loginUser({ name, email });
+  });
+}
+
+function bindFormListeners() {
+  ensureAuthDrawer();
 }
 
 function promptAdminPin() {
@@ -67,38 +94,6 @@ function promptAdminPin() {
   }
 }
 
-function bindFormListeners() {
-  const signinForm = document.getElementById('signinForm');
-  if (signinForm && !signinForm.dataset.bound) {
-    signinForm.dataset.bound = "true";
-    signinForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = document.getElementById('signinEmail')?.value.trim();
-      if (email) loginUser({ name: email.split('@')[0], email });
-    });
-  }
-
-  const signupForm = document.getElementById('signupForm');
-  if (signupForm && !signupForm.dataset.bound) {
-    signupForm.dataset.bound = "true";
-    signupForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('fullName')?.value.trim() || 'Traveler';
-      const email = document.getElementById('signupEmail')?.value.trim() || 'user@example.com';
-      const pass = document.getElementById('signupPassword')?.value;
-      const confirmPass = document.getElementById('confirmPassword')?.value;
-
-      if (pass && confirmPass && pass !== confirmPass) {
-        alert("Passwords do not match! Please check and try again.");
-        document.getElementById('confirmPassword')?.focus();
-        return;
-      }
-      loginUser({ name, email });
-    });
-  }
-}
-
-/* 2. Drawer Controls & Tab Switcher */
 function openDrawer(tab = 'signin') {
   ensureAuthDrawer();
   document.getElementById('signupDrawer')?.classList.add('active');
@@ -129,25 +124,28 @@ function switchTab(mode) {
   }
 }
 
-/* 3. Google OAuth & Session Management */
 function handleGoogleLogin() {
   if (window.location.protocol === 'file:' || !window.google?.accounts?.oauth2) {
     loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" });
     return;
   }
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: 'email profile openid',
-    callback: (res) => {
-      if (res?.access_token) {
-        fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${res.access_token}` } })
-          .then(r => r.json())
-          .then(u => loginUser({ name: u.name || u.email.split('@')[0], email: u.email, picture: u.picture }))
-          .catch(() => loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" }));
+  try {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'email profile openid',
+      callback: (res) => {
+        if (res?.access_token) {
+          fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${res.access_token}` } })
+            .then(r => r.json())
+            .then(u => loginUser({ name: u.name || u.email.split('@')[0], email: u.email, picture: u.picture }))
+            .catch(() => loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" }));
+        }
       }
-    }
-  });
-  client.requestAccessToken();
+    });
+    client.requestAccessToken();
+  } catch (e) {
+    loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" });
+  }
 }
 
 function loginUser(userData) {
@@ -163,7 +161,6 @@ function logoutUser() {
   window.dispatchEvent(new Event('skyflow_auth_changed'));
 }
 
-/* 4. Navbar UI & User Profile Dropdown */
 function updateNavbarUI() {
   let user = null;
   try { user = JSON.parse(localStorage.getItem('skyflow_user')); } catch (e) { user = null; }
@@ -204,7 +201,6 @@ function updateNavbarUI() {
   }
 }
 
-/* 5. Page Routing, Scroll Effects & Event Delegation */
 function initSkyFlowPage(activeRoute = 'home') {
   ensureAuthDrawer();
   const sub = isSubdir();
@@ -212,12 +208,15 @@ function initSkyFlowPage(activeRoute = 'home') {
   const logoImg = document.getElementById('navbarLogoImg');
   if (logoImg) logoImg.src = sub ? '../../../images/navbar logo.gif' : '../../images/navbar logo.gif';
 
-  const routes = sub ? {
-    home: '../index.html#home', flights: '../index.html#flights', track: '../Track%20Flight/trackFlight.html',
-    bookings: '../mybookings/mybookings.html', offers: '../AI_Assistence/AI_Assistence.html', ai: '../AI_Assistence/AI_Assistence.html', help: '../help/help.html'
-  } : {
-    home: '#home', flights: '#flights', track: 'Track%20Flight/trackFlight.html',
-    bookings: 'mybookings/mybookings.html', offers: 'AI_Assistence/AI_Assistence.html', ai: 'AI_Assistence/AI_Assistence.html', help: 'help/help.html'
+  const prefix = sub ? '../' : '';
+  const routes = {
+    home: prefix + 'index.html#home',
+    flights: prefix + 'index.html#flights',
+    track: prefix + 'Track%20Flight/trackFlight.html',
+    bookings: prefix + 'mybookings/mybookings.html',
+    offers: prefix + 'AI_Assistence/AI_Assistence.html',
+    ai: prefix + 'AI_Assistence/AI_Assistence.html',
+    help: prefix + 'help/help.html'
   };
 
   document.querySelectorAll('a[data-route]').forEach(link => {
@@ -242,8 +241,8 @@ function handleGlobalNavbarScroll() {
 window.addEventListener('scroll', handleGlobalNavbarScroll);
 
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.btn-signin') || e.target.closest('#openSignupBtn')) { e.preventDefault(); openDrawer('signin'); }
-  if (e.target.closest('#closeDrawerBtn') || e.target.closest('.close-btn') || e.target.closest('#drawerOverlay')) { e.preventDefault(); closeDrawer(); }
+  if (e.target.closest('.btn-signin, #openSignupBtn')) { e.preventDefault(); openDrawer('signin'); }
+  if (e.target.closest('#closeDrawerBtn, .close-btn, #drawerOverlay')) { e.preventDefault(); closeDrawer(); }
   if (e.target.closest('#userAvatarBtn')) { e.preventDefault(); document.getElementById('userDropdownMenu')?.classList.toggle('active'); }
   else if (!e.target.closest('#userProfileMenu')) { document.getElementById('userDropdownMenu')?.classList.remove('active'); }
   if (e.target.closest('#logoutBtn')) { e.preventDefault(); logoutUser(); }
