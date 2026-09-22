@@ -30,9 +30,9 @@
 
       <div class="navbar-center">
         <ul class="nav-menu">
-          <li><a href="../index.html#hero" class="nav-link">Home</a></li>
+          <li><a href="../index.html#home" class="nav-link">Home</a></li>
           <li><a href="../index.html#flights" class="nav-link">Flights</a></li>
-          <li><a href="../index.html#manage" class="nav-link">My Bookings</a></li>
+          <li><a href="../mybookings/mybookings.html" class="nav-link">My Bookings</a></li>
         </ul>
       </div>
 
@@ -159,6 +159,17 @@
       <p id="authSwitchFooter" class="footer-text">
         Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>
       </p>
+
+      <!-- Admin Panel Security Button -->
+      <div class="admin-panel-access">
+        <button type="button" class="admin-access-btn" onclick="promptAdminPin()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>Admin Panel</span>
+        </button>
+      </div>
     </div>
   </div>
 </body>
