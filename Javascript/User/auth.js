@@ -1,7 +1,20 @@
-/* SkyFlow AMS - Shared Authentication, Navbar & Component Logic */
+/* ==========================================================================
+   SkyFlow AMS - Shared Authentication, Navbar & Component Controller
+   File: Javascript/User/auth.js
+   Description: Core controller for user authentication (Email & Google OAuth),
+                dynamic auth drawer modal, navbar state, routing & user session.
+   ========================================================================== */
+
 const GOOGLE_CLIENT_ID = "630801472891-mqjmbt925glbg0do6qd3ei9c2adsuvei.apps.googleusercontent.com";
 
-// 1. Dynamic Injection of Auth Drawer if missing
+/* ==========================================================================
+   1. Dynamic Injection of Auth Drawer & Admin Access
+   ========================================================================== */
+
+/**
+ * Ensures the popup auth drawer HTML exists in the document body.
+ * Injects right-sliding auth drawer if not already present.
+ */
 function ensureAuthDrawer() {
   if (document.getElementById('signupDrawer')) return;
   document.body.insertAdjacentHTML('beforeend', `
@@ -85,6 +98,10 @@ function ensureAuthDrawer() {
   bindFormListeners();
 }
 
+/**
+ * Admin Panel PIN Verification Modal.
+ * Prompts user for security PIN ('6969') to grant administrative access.
+ */
 function promptAdminPin() {
   const pin = prompt("Enter Admin Access PIN:");
   if (pin === null) return;
@@ -92,7 +109,8 @@ function promptAdminPin() {
     const isSubdir = window.location.pathname.includes('/help/') ||
                      window.location.pathname.includes('/mybookings/') ||
                      window.location.pathname.includes('/Track%20Flight/') ||
-                     window.location.pathname.includes('/Track Flight/');
+                     window.location.pathname.includes('/Track Flight/') ||
+                     window.location.pathname.includes('/AI_Assistence/');
     const adminUrl = isSubdir ? '../../Admin/index.html' : '../Admin/index.html';
     window.location.href = adminUrl;
   } else {
@@ -100,22 +118,48 @@ function promptAdminPin() {
   }
 }
 
+/**
+ * Binds form submit handlers for Sign In and Sign Up.
+ * Includes password match validation for user sign up.
+ */
 function bindFormListeners() {
-  document.getElementById('signinForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('signinEmail')?.value.trim();
-    if (email) loginUser({ name: email.split('@')[0], email: email });
-  });
+  const signinForm = document.getElementById('signinForm');
+  if (signinForm && !signinForm.dataset.bound) {
+    signinForm.dataset.bound = "true";
+    signinForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signinEmail')?.value.trim();
+      if (email) {
+        loginUser({ name: email.split('@')[0], email: email });
+      }
+    });
+  }
 
-  document.getElementById('signupForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('fullName')?.value.trim() || 'Traveler';
-    const email = document.getElementById('signupEmail')?.value.trim() || 'user@example.com';
-    loginUser({ name: name, email: email });
-  });
+  const signupForm = document.getElementById('signupForm');
+  if (signupForm && !signupForm.dataset.bound) {
+    signupForm.dataset.bound = "true";
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('fullName')?.value.trim() || 'Traveler';
+      const email = document.getElementById('signupEmail')?.value.trim() || 'user@example.com';
+      const pass = document.getElementById('signupPassword')?.value;
+      const confirmPass = document.getElementById('confirmPassword')?.value;
+
+      if (pass && confirmPass && pass !== confirmPass) {
+        alert("Passwords do not match! Please check and try again.");
+        document.getElementById('confirmPassword')?.focus();
+        return;
+      }
+
+      loginUser({ name: name, email: email });
+    });
+  }
 }
 
-// 2. Drawer Controls & Tab Switcher
+/* ==========================================================================
+   2. Drawer Controls & Tab Switching Logic
+   ========================================================================== */
+
 function openDrawer(tab = 'signin') {
   ensureAuthDrawer();
   const drawer = document.getElementById('signupDrawer');
@@ -140,11 +184,22 @@ function switchTab(mode) {
   const signinForm = document.getElementById('signinForm');
   const signupForm = document.getElementById('signupForm');
   const drawerTitle = document.getElementById('drawerTitle');
+  const footerText = document.getElementById('authSwitchFooter');
 
   if (signinForm) signinForm.style.display = isSignIn ? 'flex' : 'none';
   if (signupForm) signupForm.style.display = isSignIn ? 'none' : 'flex';
   if (drawerTitle) drawerTitle.textContent = isSignIn ? 'Welcome Back' : 'Create Account';
+
+  if (footerText) {
+    footerText.innerHTML = isSignIn
+      ? `Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>`
+      : `Already have an account? <a href="#" onclick="switchTab('signin'); return false;">Sign in</a>`;
+  }
 }
+
+/* ==========================================================================
+   3. Google OAuth 2.0 & Session Management
+   ========================================================================== */
 
 function ensureGoogleScript(callback) {
   if (window.google?.accounts?.oauth2) {
@@ -173,7 +228,10 @@ function ensureGoogleScript(callback) {
   }
 }
 
-// 3. Google OAuth 2.0 Login Handler
+/**
+ * Handles Google OAuth 2.0 Login.
+ * On local file:// runs, uses instant demo fallback. On web servers, initiates Google Sign-In.
+ */
 function handleGoogleLogin() {
   if (window.location.protocol === 'file:') {
     loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" });
@@ -203,7 +261,6 @@ function handleGoogleLogin() {
   });
 }
 
-// 4. User Session & Dynamic Navbar Profile Avatar
 function loginUser(userData) {
   localStorage.setItem('skyflow_user', JSON.stringify(userData));
   updateNavbarUI();
@@ -216,6 +273,10 @@ function logoutUser() {
   updateNavbarUI();
   window.dispatchEvent(new Event('skyflow_auth_changed'));
 }
+
+/* ==========================================================================
+   4. Dynamic Navbar Profile Avatar & Dropdown UI
+   ========================================================================== */
 
 function updateNavbarUI() {
   let user = null;
@@ -234,7 +295,8 @@ function updateNavbarUI() {
   const isSubdir = window.location.pathname.includes('/help/') ||
                    window.location.pathname.includes('/mybookings/') ||
                    window.location.pathname.includes('/Track%20Flight/') ||
-                   window.location.pathname.includes('/Track Flight/');
+                   window.location.pathname.includes('/Track Flight/') ||
+                   window.location.pathname.includes('/AI_Assistence/');
   const myBookingsPath = isSubdir ? '../mybookings/mybookings.html' : 'mybookings/mybookings.html';
 
   if (user && (user.name || user.email)) {
@@ -242,7 +304,7 @@ function updateNavbarUI() {
       ? user.name.charAt(0).toUpperCase()
       : 'U';
     const avatar = user.picture
-      ? `<img src="${user.picture}" class="user-avatar-img" alt="User">`
+      ? `<img src="${user.picture}" class="user-avatar-img" alt="User Avatar">`
       : `<div class="user-avatar-circle">${initial}</div>`;
 
     const isMyBookingsPage = window.location.pathname.includes('/mybookings/');
@@ -276,7 +338,10 @@ function updateNavbarUI() {
   }
 }
 
-// 5. Global Page Initializer (Navbar, Footer, Routes, Logo, Drawer)
+/* ==========================================================================
+   5. Global Navbar Routing, Scroll Effects & Event Delegation
+   ========================================================================== */
+
 function initSkyFlowPage(activeRoute = 'home') {
   ensureAuthDrawer();
   
@@ -286,13 +351,13 @@ function initSkyFlowPage(activeRoute = 'home') {
                    window.location.pathname.includes('/Track Flight/') ||
                    window.location.pathname.includes('/AI_Assistence/');
 
-  // Fix logo image src
+  // Fix logo image src based on depth
   const logoImg = document.getElementById('navbarLogoImg');
   if (logoImg) {
     logoImg.src = isSubdir ? '../../../images/navbar logo.gif' : '../../images/navbar logo.gif';
   }
 
-  // Define route mapping for all links
+  // Define route mapping for navigation links
   const routes = isSubdir ? {
     home:     '../index.html#home',
     flights:  '../index.html#flights',
@@ -311,7 +376,6 @@ function initSkyFlowPage(activeRoute = 'home') {
     help:     'help/help.html'
   };
 
-  // Patch all navigation and logo links
   document.querySelectorAll('a[data-route]').forEach(link => {
     const route = link.dataset.route;
     if (routes[route] !== undefined) {
@@ -324,17 +388,14 @@ function initSkyFlowPage(activeRoute = 'home') {
     logoLink.href = isSubdir ? '../index.html' : 'index.html';
   }
 
-  // Activate current route in navbar
   document.querySelectorAll('.nav-link').forEach(l => {
     const route = l.dataset.route;
     l.classList.toggle('active', route === activeRoute);
   });
 
-  // Update sign-in / user profile state
   updateNavbarUI();
 }
 
-// 6. Global Navbar Scroll Transition
 function handleGlobalNavbarScroll() {
   const header = document.querySelector('.site-header');
   if (header) {
@@ -343,18 +404,21 @@ function handleGlobalNavbarScroll() {
 }
 window.addEventListener('scroll', handleGlobalNavbarScroll);
 
-// 7. Global Event Delegation
+/* Global Event Delegation */
 document.addEventListener('click', (e) => {
+  // Sign-in / Join button
   if (e.target.closest('.btn-signin') || e.target.closest('#openSignupBtn')) {
     e.preventDefault();
     openDrawer('signin');
   }
 
+  // Close drawer button or backdrop overlay
   if (e.target.closest('#closeDrawerBtn') || e.target.closest('.close-btn') || e.target.closest('#drawerOverlay')) {
     e.preventDefault();
     closeDrawer();
   }
 
+  // User avatar profile dropdown
   if (e.target.closest('#userAvatarBtn')) {
     e.preventDefault();
     document.getElementById('userDropdownMenu')?.classList.toggle('active');
@@ -362,14 +426,24 @@ document.addEventListener('click', (e) => {
     document.getElementById('userDropdownMenu')?.classList.remove('active');
   }
 
+  // Sign out button
   if (e.target.closest('#logoutBtn')) {
     e.preventDefault();
     logoutUser();
   }
+
+  // Auto-close mobile navigation menu when a link is clicked
+  if (e.target.closest('.nav-link')) {
+    const navToggle = document.getElementById('nav-toggle');
+    if (navToggle) navToggle.checked = false;
+  }
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeDrawer();
+  if (e.key === 'Escape') {
+    closeDrawer();
+    document.getElementById('userDropdownMenu')?.classList.remove('active');
+  }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
