@@ -81,23 +81,16 @@ function ensureAuthDrawer() {
   });
 }
 
-function bindFormListeners() {
-  ensureAuthDrawer();
-}
-
 function promptAdminPin() {
   const pin = prompt("Enter Admin Access PIN:");
-  if (pin && pin.trim() === "6969") {
-    window.location.href = isSubdir() ? '../../Admin/index.html' : '../Admin/index.html';
-  } else if (pin !== null) {
-    alert("Incorrect PIN! Access denied.");
-  }
+  if (pin === "6969") window.location.href = isSubdir() ? '../../Admin/index.html' : '../Admin/index.html';
+  else if (pin !== null) alert("Incorrect PIN! Access denied.");
 }
 
 function openDrawer(tab = 'signin') {
   ensureAuthDrawer();
   document.getElementById('signupDrawer')?.classList.add('active');
-  switchTab(tab);
+  switchTab(tab || 'signin');
 }
 
 function closeDrawer() {
@@ -105,27 +98,19 @@ function closeDrawer() {
 }
 
 function switchTab(mode) {
-  const isSignIn = mode === 'signin';
-  document.getElementById('signinTab')?.classList.toggle('active', isSignIn);
-  document.getElementById('signupTab')?.classList.toggle('active', !isSignIn);
-
-  const signinForm = document.getElementById('signinForm');
-  const signupForm = document.getElementById('signupForm');
-  const drawerTitle = document.getElementById('drawerTitle');
-  const footerText = document.getElementById('authSwitchFooter');
-
-  if (signinForm) signinForm.style.display = isSignIn ? 'flex' : 'none';
-  if (signupForm) signupForm.style.display = isSignIn ? 'none' : 'flex';
-  if (drawerTitle) drawerTitle.textContent = isSignIn ? 'Welcome Back' : 'Create Account';
-  if (footerText) {
-    footerText.innerHTML = isSignIn
-      ? `Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>`
-      : `Already have an account? <a href="#" onclick="switchTab('signin'); return false;">Sign in</a>`;
-  }
+  const isSignIn = (mode === 'signin');
+  document.getElementById('signinTab').className = isSignIn ? 'tab-btn active' : 'tab-btn';
+  document.getElementById('signupTab').className = isSignIn ? 'tab-btn' : 'tab-btn active';
+  document.getElementById('signinForm').style.display = isSignIn ? 'flex' : 'none';
+  document.getElementById('signupForm').style.display = isSignIn ? 'none' : 'flex';
+  document.getElementById('drawerTitle').textContent = isSignIn ? 'Welcome Back' : 'Create Account';
+  document.getElementById('authSwitchFooter').innerHTML = isSignIn
+    ? `Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>`
+    : `Already have an account? <a href="#" onclick="switchTab('signin'); return false;">Sign in</a>`;
 }
 
 function handleGoogleLogin() {
-  if (window.location.protocol === 'file:' || !window.google?.accounts?.oauth2) {
+  if (location.protocol === 'file:' || !window.google?.accounts?.oauth2) {
     loginUser({ name: "Raghav Chhabra", email: "raghav.chhabra111@gmail.com" });
     return;
   }
@@ -152,51 +137,34 @@ function loginUser(userData) {
   localStorage.setItem('skyflow_user', JSON.stringify(userData));
   updateNavbarUI();
   closeDrawer();
-  window.dispatchEvent(new Event('skyflow_auth_changed'));
 }
 
 function logoutUser() {
   localStorage.removeItem('skyflow_user');
   updateNavbarUI();
-  window.dispatchEvent(new Event('skyflow_auth_changed'));
 }
 
 function updateNavbarUI() {
+  const navActions = document.getElementById('navActions');
+  if (!navActions) return;
   let user = null;
   try { user = JSON.parse(localStorage.getItem('skyflow_user')); } catch (e) { user = null; }
 
-  const navActions = document.getElementById('navActions');
-  if (!navActions) return;
-
-  const myBookingsPath = isSubdir() ? '../mybookings/mybookings.html' : 'mybookings/mybookings.html';
-
-  if (user && (user.name || user.email)) {
-    const initial = (user.name?.[0] || 'U').toUpperCase();
-    const avatar = user.picture
-      ? `<img src="${user.picture}" class="user-avatar-img" alt="User Avatar">`
-      : `<div class="user-avatar-circle">${initial}</div>`;
-    const bookingsHref = window.location.pathname.includes('/mybookings/') ? '#' : myBookingsPath;
-
-    navActions.innerHTML = `
-      <div class="user-profile-menu" id="userProfileMenu">
-        <button type="button" class="user-avatar-btn" id="userAvatarBtn">${avatar}</button>
+  if (user?.email) {
+    const initial = (user.name ? user.name[0] : 'U').toUpperCase();
+    const bookingsLink = isSubdir() ? '../mybookings/mybookings.html' : 'mybookings/mybookings.html';
+    navActions.innerHTML = `<div class="user-profile-menu" id="userProfileMenu">
+        <button type="button" class="user-avatar-btn" id="userAvatarBtn"><div class="user-avatar-circle">${initial}</div></button>
         <div class="user-dropdown-menu" id="userDropdownMenu">
-          <div class="user-dropdown-header">
-            <div class="user-dropdown-avatar">${initial}</div>
-            <div class="user-dropdown-details">
-              <span class="user-dropdown-name">${user.name || 'User'}</span>
-              <span class="user-dropdown-email">${user.email || ''}</span>
-            </div>
-          </div>
+          <div class="user-dropdown-header"><div class="user-dropdown-avatar">${initial}</div><div class="user-dropdown-details"><span class="user-dropdown-name">${user.name || 'User'}</span><span class="user-dropdown-email">${user.email}</span></div></div>
           <div class="user-dropdown-divider"></div>
-          <a href="${bookingsHref}" class="user-dropdown-link">My Bookings</a>
+          <a href="${bookingsLink}" class="user-dropdown-link">My Bookings</a>
           <button type="button" class="user-dropdown-link logout-btn" id="logoutBtn">Sign Out</button>
         </div>
       </div>`;
   } else {
-    navActions.innerHTML = `
-      <a href="#" class="btn-signin" id="openSignupBtn" onclick="openDrawer(); return false;" title="Sign In / Join" aria-label="Sign In / Join">
-        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    navActions.innerHTML = `<a href="#" class="btn-signin" id="openSignupBtn" onclick="openDrawer(); return false;" title="Sign In / Join" aria-label="Sign In / Join">
+        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </a>`;
   }
 }
@@ -204,38 +172,31 @@ function updateNavbarUI() {
 function initSkyFlowPage(activeRoute = 'home') {
   ensureAuthDrawer();
   const sub = isSubdir();
-
   const logoImg = document.getElementById('navbarLogoImg');
   if (logoImg) logoImg.src = sub ? '../../../images/navbar logo.gif' : '../../images/navbar logo.gif';
-
-  const prefix = sub ? '../' : '';
-  const routes = {
-    home: prefix + 'index.html#home',
-    flights: prefix + 'index.html#flights',
-    track: prefix + 'Track%20Flight/trackFlight.html',
-    bookings: prefix + 'mybookings/mybookings.html',
-    offers: prefix + 'AI_Assistence/AI_Assistence.html',
-    ai: prefix + 'AI_Assistence/AI_Assistence.html',
-    help: prefix + 'help/help.html'
-  };
-
-  document.querySelectorAll('a[data-route]').forEach(link => {
-    if (routes[link.dataset.route]) link.href = routes[link.dataset.route];
-  });
 
   const logoLink = document.querySelector('.navbar-logo');
   if (logoLink) logoLink.href = sub ? '../index.html' : 'index.html';
 
-  document.querySelectorAll('.nav-link').forEach(l => {
-    l.classList.toggle('active', l.dataset.route === activeRoute);
-  });
+  const routes = {
+    home: sub ? '../index.html#home' : '#home',
+    flights: sub ? '../index.html#flights' : '#flights',
+    track: sub ? '../Track%20Flight/trackFlight.html' : 'Track%20Flight/trackFlight.html',
+    bookings: sub ? '../mybookings/mybookings.html' : 'mybookings/mybookings.html',
+    help: sub ? '../help/help.html' : 'help/help.html'
+  };
 
+  document.querySelectorAll('a[data-route]').forEach(link => {
+    const route = link.dataset.route;
+    if (routes[route]) link.href = routes[route];
+    link.classList.toggle('active', route === activeRoute);
+  });
   updateNavbarUI();
 }
 
 function handleGlobalNavbarScroll() {
   const header = document.querySelector('.site-header');
-  if (header) header.classList.toggle('scrolled', window.scrollY > (window.innerHeight - 80));
+  if (header) header.classList.toggle('scrolled', window.scrollY > 80);
 }
 
 window.addEventListener('scroll', handleGlobalNavbarScroll);
@@ -246,14 +207,20 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('#userAvatarBtn')) { e.preventDefault(); document.getElementById('userDropdownMenu')?.classList.toggle('active'); }
   else if (!e.target.closest('#userProfileMenu')) { document.getElementById('userDropdownMenu')?.classList.remove('active'); }
   if (e.target.closest('#logoutBtn')) { e.preventDefault(); logoutUser(); }
-  if (e.target.closest('.nav-link')) { const navToggle = document.getElementById('nav-toggle'); if (navToggle) navToggle.checked = false; }
+  if (e.target.closest('.nav-link')) {
+    const navToggle = document.getElementById('nav-toggle');
+    if (navToggle) navToggle.checked = false;
+  }
 });
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeDrawer(); document.getElementById('userDropdownMenu')?.classList.remove('active'); }
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDrawer();
+    document.getElementById('userDropdownMenu')?.classList.remove('active');
+  }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   handleGlobalNavbarScroll();
   ensureAuthDrawer();
   updateNavbarUI();
