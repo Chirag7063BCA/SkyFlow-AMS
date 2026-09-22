@@ -7,7 +7,7 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 5rem 1.5rem 6rem;
+  padding: 0 1.5rem 6rem;
   color: #333;
 }
 
@@ -485,10 +485,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.5rem;
+  padding: 9.5rem 1.5rem 3rem;
   animation: fadeInUp .4s cubic-bezier(.16, 1, .3, 1) both;
   position: relative;
   z-index: 5;
+}
+
+@media (max-width: 768px) {
+  .flights-search-bar {
+    min-height: auto;
+    padding-top: 8.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .flights-search-bar {
+    padding-top: 7.5rem !important;
+    padding-bottom: 2rem !important;
+  }
 }
 
 .fsb-container {
