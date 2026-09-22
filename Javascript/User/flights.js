@@ -459,6 +459,9 @@ function setupCabinClassMenu(inputId, dropdownId, allFlights) {
 
 // ── Application Initialization ──
 async function initApp() {
+  if (window.componentsLoadedPromise) {
+    await window.componentsLoadedPromise;
+  }
   const { flights: allFlights, airports: allAirports } = await loadData();
   const debouncedSearch = debounce(() => applyFilters(allFlights), 120);
 
