@@ -203,7 +203,6 @@ function setupDestinationSlider() {
   window.addEventListener('resize', () => updateSlide(false));
 
   updateSlide(false);
->>>>>>> Stashed changes
 }
 
 function handleRouteView() {
