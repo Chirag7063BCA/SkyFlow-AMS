@@ -166,18 +166,25 @@
 }
 
 /* ==========================================
-   TABLET & MOBILE BREAKPOINT (<= 992px)
+   TABLET BREAKPOINT (641px - 992px)
    ========================================== */
-@media (max-width: 992px) {
+@media (max-width: 992px) and (min-width: 641px) {
   .destination-section {
     padding: 2.5rem 1.25rem;
   }
   .destination-bento-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.25rem;
   }
+  .bento-col.col-left {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: center;
+  }
   .destination-card {
-    height: 240px;
+    height: 230px;
     border-radius: 20px;
   }
   .heading-br {
@@ -185,13 +192,23 @@
   }
 }
 
+/* ==========================================
+   MOBILE BREAKPOINT (<= 640px)
+   ========================================== */
 @media (max-width: 640px) {
   .destination-section {
     padding: 2rem 1rem;
   }
+  .destination-bento-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
   .destination-card {
     height: 210px;
     border-radius: 18px;
+  }
+  .heading-br {
+    display: none;
   }
   .card-content-overlay {
     padding: 1rem 1.1rem;

@@ -3,11 +3,11 @@
 
     <p class="hero-eyebrow">Fly Beyond Boundaries</p>
     <h1 class="hero-title">
-      WHERE 
+      WHERE
       <span class="animated-text-wrapper">
         <span class="animated-text hero-title-accent">JOURNEYS</span>
         <span class="animated-text hero-title-accent delay">ADVENTURES</span>
-      </span> 
+      </span>
       TAKE FLIGHT
     </h1>
     <p class="hero-copy">Discover seamless travel experiences, curated for comfort, speed, and style.</p>
@@ -18,9 +18,12 @@
       <!-- Trip Type -->
       <fieldset class="trip-type">
         <legend class="sr-only">Trip type</legend>
-        <label class="trip-label"><input type="radio" name="tripType" value="oneWay" checked><span class="radio-dot"></span> One Way</label>
-        <label class="trip-label"><input type="radio" name="tripType" value="roundTrip"><span class="radio-dot"></span> Round Trip</label>
-        <label class="trip-label"><input type="radio" name="tripType" value="multiCity"><span class="radio-dot"></span> Multi City</label>
+        <label class="trip-label"><input type="radio" name="tripType" value="oneWay" checked><span
+            class="radio-dot"></span> One Way</label>
+        <label class="trip-label"><input type="radio" name="tripType" value="roundTrip"><span class="radio-dot"></span>
+          Round Trip</label>
+        <label class="trip-label"><input type="radio" name="tripType" value="multiCity"><span class="radio-dot"></span>
+          Multi City</label>
       </fieldset>
 
       <!-- Airport + Date Fields -->
@@ -29,7 +32,8 @@
 
           <div class="flight-field">
             <label class="field-label" for="departureFrom">Departure From</label>
-            <input id="departureFrom" type="search" class="field-control" placeholder="City or airport" autocomplete="off">
+            <input id="departureFrom" type="search" class="field-control" placeholder="City or airport"
+              autocomplete="off">
             <div id="departureFromDropdown" class="autocomplete-dropdown"></div>
           </div>
 
@@ -53,12 +57,9 @@
 
           <div class="flight-field">
             <label class="field-label" for="travellersClass">Travellers & Class</label>
-            <select id="travellersClass" class="field-control">
-              <option>1 Traveller, Economy</option>
-              <option>1 Traveller, Premium Economy</option>
-              <option>2 Travellers, Economy</option>
-              <option>2 Travellers, Business</option>
-            </select>
+            <input id="travellersClass" type="text" class="field-control" value="Economy" readonly
+              placeholder="Select Class" autocomplete="off" style="cursor: pointer;">
+            <div id="travellersClassDropdown" class="autocomplete-dropdown"></div>
           </div>
 
         </div>
@@ -71,12 +72,23 @@
       <!-- Special Fares -->
       <div class="fares-row">
         <div class="fare-options">
-          <label class="fare-label"><input type="radio" name="fareType" value="regular" checked><span class="fare-title">Regular</span><span class="fare-desc">Regular Fares</span></label>
-          <label class="fare-label"><input type="radio" name="fareType" value="student"><span class="fare-title">Student</span><span class="fare-desc">Extra Baggage</span></label>
-          <label class="fare-label"><input type="radio" name="fareType" value="armed"><span class="fare-title">Armed Forces</span><span class="fare-desc">Extra Discount</span></label>
-          <label class="fare-label"><input type="radio" name="fareType" value="senior"><span class="fare-title">Senior Citizen</span><span class="fare-desc">Extra Discount</span></label>
+          <label class="fare-label"><input type="radio" name="fareType" value="regular" checked><span
+              class="fare-title">Regular</span><span class="fare-desc">Regular Fares</span></label>
+          <label class="fare-label"><input type="radio" name="fareType" value="student"><span
+              class="fare-title">Student</span><span class="fare-desc">Extra Baggage</span></label>
+          <label class="fare-label"><input type="radio" name="fareType" value="armed"><span class="fare-title">Armed
+              Forces</span><span class="fare-desc">Extra Discount</span></label>
+          <label class="fare-label"><input type="radio" name="fareType" value="senior"><span class="fare-title">Senior
+              Citizen</span><span class="fare-desc">Extra Discount</span></label>
         </div>
-        <label class="nonstop-label"><input type="checkbox" id="nonStop"> Non-Stop Flights</label>
+        <label class="nonstop-label">
+          <input type="checkbox" id="nonStop">
+          <span class="custom-checkbox"></span>
+          <span class="nonstop-text-wrapper">
+            <span class="nonstop-title">Non-Stop</span>
+            <span class="fare-desc">Direct Flights</span>
+          </span>
+        </label>
       </div>
 
     </div>

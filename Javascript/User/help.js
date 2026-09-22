@@ -14,7 +14,12 @@ async function loadHelpComponent(url, id) {
     const res = await fetch(url);
     if (res.ok) {
       const container = document.getElementById(id);
-      if (container) container.innerHTML = await res.text();
+      if (container) {
+        container.innerHTML = await res.text();
+        if (id === 'navbar-container' && typeof initSkyFlowPage === 'function') {
+          initSkyFlowPage('help');
+        }
+      }
     }
   } catch (err) {
     console.error(`Error loading help component ${url}:`, err);
@@ -25,16 +30,9 @@ async function loadHelpComponent(url, id) {
  * 2. Help Center Page Initialization
  * Fetches Navbar & Footer, activates current route in navigation, and syncs auth state.
  */
-async function initHelpPage() {
-  await Promise.all([
-    loadHelpComponent('../globalcomp/navbar.html', 'navbar-container'),
-    loadHelpComponent('../globalcomp/footer.html', 'footer-container')
-  ]);
-
-  // Trigger global page initialization from auth.js to bind nav routes & user session
-  if (typeof initSkyFlowPage === 'function') {
-    initSkyFlowPage('help');
-  }
+function initHelpPage() {
+  loadHelpComponent('../globalcomp/navbar.html', 'navbar-container');
+  loadHelpComponent('../globalcomp/footer.html', 'footer-container');
 }
 
 /**
