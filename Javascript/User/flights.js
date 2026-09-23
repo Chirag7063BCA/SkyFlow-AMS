@@ -457,6 +457,33 @@ function setupCabinClassMenu(inputId, dropdownId, allFlights) {
   });
 }
 
+function setupTravellersClassMenu(inputId, dropdownId, allFlights) {
+  const options = [
+    { label: 'Economy', sub: 'Standard seating' },
+    { label: 'Premium Economy', sub: 'Extra legroom & comfort' },
+    { label: 'Business Class', sub: 'Lie-flat seats & lounge access' },
+    { label: 'First Class', sub: 'Luxury private suite' }
+  ];
+
+  setupSimpleMenu(inputId, dropdownId, (val) => {
+    let html = `<div class="autocomplete-header">SELECT CABIN CLASS</div>`;
+    options.forEach(opt => {
+      const active = val === opt.label ? 'active' : '';
+      html += `
+        <div class="autocomplete-option ${active}" data-val="${opt.label}">
+          <div class="autocomplete-option-info">
+            <span class="autocomplete-option-city">${opt.label}</span>
+            <span class="autocomplete-option-airport">${opt.sub}</span>
+          </div>
+        </div>`;
+    });
+    return html;
+  }, (v, inp) => {
+    inp.value = v;
+    applyFilters(allFlights);
+  });
+}
+
 // ── Application Initialization ──
 async function initApp() {
   if (window.componentsLoadedPromise) {
@@ -488,6 +515,7 @@ async function initApp() {
   setupTravellersMenu('fsbTravellers', 'fsbTravellersDropdown', allFlights);
   setupTripTypeMenu('fsbTripType', 'fsbTripTypeDropdown', allFlights);
   setupCabinClassMenu('fsbCabin', 'fsbCabinDropdown', allFlights);
+  setupTravellersClassMenu('travellersClass', 'travellersClassDropdown', allFlights);
 
   // Synchronize input fields (Hero ↔ Flights Bar)
   const syncInputs = (id1, id2) => {
@@ -512,6 +540,13 @@ async function initApp() {
   document.getElementById('searchBtn')?.addEventListener('click', () => {
     const hFrom = document.getElementById('departureFrom'), hTo = document.getElementById('goingTo');
     const fFrom = document.getElementById('fsbFrom'), fTo = document.getElementById('fsbTo');
+    const msg = document.getElementById('resultsMsg');
+
+    if (!hFrom?.value.trim() && !hTo?.value.trim() && !fFrom?.value.trim() && !fTo?.value.trim()) {
+      if (msg) msg.textContent = 'Please enter origin or destination city.';
+      return;
+    }
+
     if (hFrom && fFrom) { if (hFrom.value) fFrom.value = hFrom.value; else if (fFrom.value) hFrom.value = fFrom.value; }
     if (hTo && fTo) { if (hTo.value) fTo.value = hTo.value; else if (fTo.value) hTo.value = fTo.value; }
 

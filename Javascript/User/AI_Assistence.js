@@ -1,10 +1,10 @@
 /* SkyFlow AMS - AI Assistance JS Logic */
 
 async function initAIFloatingWidget() {
-  const isSubdir = window.location.pathname.includes('/help/') ||
-                   window.location.pathname.includes('/mybookings/') ||
-                   window.location.pathname.includes('/Track%20Flight/') ||
-                   window.location.pathname.includes('/Track Flight/');
+  const normPath = window.location.pathname.toLowerCase().replace(/\\/g, '/');
+  const isSubdir = normPath.includes('/help') ||
+                   normPath.includes('/mybookings') ||
+                   normPath.includes('/track');
 
   // 1. Inject Stylesheet if not present
   if (!document.getElementById('ai-assistance-css')) {
@@ -38,10 +38,12 @@ async function initAIFloatingWidget() {
   }
 
   // 4. Setup Event Listeners & Logic
-  setupAIWidgetLogic();
+  setupAIWidgetLogic(isSubdir);
 }
 
-function setupAIWidgetLogic() {
+function setupAIWidgetLogic(isSubdir = false) {
+  const getRelPath = (path) => (isSubdir ? '../' : './') + path;
+
   const trigger = document.getElementById('aiWidgetTrigger');
   const chatWidget = document.getElementById('aiChatWidget');
   const closeBtn = document.getElementById('closeChatBtn');
@@ -55,6 +57,7 @@ function setupAIWidgetLogic() {
   const clearBtn = document.getElementById('headerClearBtn');
 
   let userName = '';
+  let awaitingPhone = false;
 
   if (!trigger || !chatWidget) return;
 
@@ -152,6 +155,7 @@ function setupAIWidgetLogic() {
       </div>
     `;
     userName = '';
+    awaitingPhone = false;
   }
 
   function handleSend() {
@@ -218,6 +222,23 @@ function setupAIWidgetLogic() {
   function generateReply(msg) {
     const q = msg.toLowerCase().trim();
 
+    if (awaitingPhone) {
+      if (q === 'cancel' || q === 'no' || q === 'stop' || q.includes('nevermind') || q.includes('no thanks') || q.includes('dont want')) {
+        awaitingPhone = false;
+        return `Booking request cancelled. How else can Navigator assist you today?`;
+      }
+
+      const cleanPhone = msg.replace(/[\s\-\(\)\+]/g, '');
+      const isValidPhone = /^\d{10,13}$/.test(cleanPhone);
+
+      if (isValidPhone) {
+        awaitingPhone = false;
+        return `📞 Thank you! For now, you got a call for booking a flight on <strong>${escapeHtml(msg.trim())}</strong>. Our team will contact you shortly!`;
+      } else {
+        return `⚠️ Please enter a valid phone number (10-12 digits, e.g., 9876543210) so our team can call you for booking:`;
+      }
+    }
+
     if (q.includes("prefer not to say") || q.includes("no name")) {
       return "No problem at all! How can I assist you with your flight details today?";
     }
@@ -228,24 +249,29 @@ function setupAIWidgetLogic() {
       return `Pleased to meet you, <strong>${escapeHtml(userName)}</strong>! ✨ What can Navigator help you explore today?`;
     }
 
-    if (q.includes("book") || q.includes("flight") || q.includes("ticket")) {
-      return `✈️ Search flights and book tickets easily on our <a href="../index.html#flights">Flights Page</a>!`;
+    if (q.includes("cancel") || q.includes("refund")) {
+      return `🎫 Manage active tickets or request cancellations under <a href="${getRelPath('mybookings/mybookings.html')}">My Bookings</a>. Eligible refunds credit in 5-7 business days.`;
     }
 
     if (q.includes("track") || q.includes("radar") || q.includes("status")) {
-      return `🔍 Track live aircraft positions and departure gates on our <a href="../Track%20Flight/trackFlight.html">Flight Radar Page</a>.`;
+      return `🔍 Track live aircraft positions and departure gates on our <a href="${getRelPath('Track%20Flight/trackFlight.html')}">Flight Radar Page</a>.`;
+    }
+
+    if (q.includes("book") || q.includes("ticket") || q.includes("reservation")) {
+      awaitingPhone = true;
+      return `✈️ Please enter your phone number to proceed with booking a flight:`;
     }
 
     if (q.includes("baggage") || q.includes("luggage") || q.includes("bag")) {
       return `🎒 <strong>Baggage Rules:</strong><br>• Cabin Hand Bag: 1 bag up to 7 kg (Free)<br>• Economy: 1 checked bag up to 23 kg<br>• Business: 2 bags up to 32 kg each`;
     }
 
-    if (q.includes("cancel") || q.includes("refund") || q.includes("booking")) {
-      return `🎫 Manage active tickets or request cancellations under <a href="../mybookings/mybookings.html">My Bookings</a>. Eligible refunds credit in 5-7 business days.`;
+    if (q.includes("booking")) {
+      return `🎫 Manage active tickets or request cancellations under <a href="${getRelPath('mybookings/mybookings.html')}">My Bookings</a>. Eligible refunds credit in 5-7 business days.`;
     }
 
     if (q.includes("delay") || q.includes("gate") || q.includes("alert")) {
-      return `🕒 Departure gates and status updates refresh live on our <a href="../Track%20Flight/trackFlight.html">Track Flight</a> page.`;
+      return `🕒 Departure gates and status updates refresh live on our <a href="${getRelPath('Track%20Flight/trackFlight.html')}">Track Flight</a> page.`;
     }
 
     if (q.includes("hi") || q.includes("hello") || q.includes("hey")) {
@@ -253,10 +279,10 @@ function setupAIWidgetLogic() {
     }
 
     if (q.includes("help") || q.includes("support") || q.includes("contact")) {
-      return `📞 Customer support is available 24/7 on the <a href="../help/help.html">Help Center Page</a>.`;
+      return `📞 Customer support is available 24/7 on the <a href="${getRelPath('help/help.html')}">Help Center Page</a>.`;
     }
 
-    return `As your SkyFlow assistant, I can help with <a href="../index.html#flights">flight bookings</a>, <a href="../Track%20Flight/trackFlight.html">live tracking</a>, <a href="../mybookings/mybookings.html">ticket management</a>, or baggage rules!`;
+    return `As your SkyFlow assistant, I can help with <a href="${getRelPath('index.html#flights')}">flight bookings</a>, <a href="${getRelPath('Track%20Flight/trackFlight.html')}">live tracking</a>, <a href="${getRelPath('mybookings/mybookings.html')}">ticket management</a>, or baggage rules!`;
   }
 }
 

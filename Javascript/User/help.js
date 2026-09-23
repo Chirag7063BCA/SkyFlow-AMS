@@ -4,7 +4,12 @@ async function loadHelpComponent(url, id) {
     const res = await fetch(url);
     if (res.ok) {
       const container = document.getElementById(id);
-      if (container) container.innerHTML = await res.text();
+      if (container) {
+        container.innerHTML = await res.text();
+        if (id === 'navbar-container' && typeof initSkyFlowPage === 'function') {
+          initSkyFlowPage('help');
+        }
+      }
     }
   } catch (err) {
     console.error(`Error loading help component ${url}:`, err);

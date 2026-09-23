@@ -7516,5 +7516,19 @@
     "nonStop": true,
     "status": "On Time",
     "fare": "$580"
+  },
+  {
+    "flightNumber": "CA-948",
+    "airline": "Air China",
+    "originCity": "New Delhi",
+    "destinationCity": "Beijing",
+    "departureTime": "03:15 AM",
+    "arrivalTime": "11:45 AM",
+    "duration": "5h 45m",
+    "fromAirportCode": "DEL",
+    "toAirportCode": "PEK",
+    "nonStop": true,
+    "status": "On Time",
+    "fare": "$450"
   }
 ]
