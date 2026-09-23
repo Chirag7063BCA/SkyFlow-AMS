@@ -1,9 +1,4 @@
-/* ==========================================================================
-   SkyFlow AMS - Help Center Stylesheet (Simple & Clean)
-   File: CSS/User/help.css
-   ========================================================================== */
-
-/* 1. Global Reset & Base Page Animation */
+/* Global Reset & Base Page Animation */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -17,7 +12,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 2. Help Hero Section */
+/* Hero Section */
 .help-hero {
   position: relative; min-height: 100vh;
   display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
@@ -35,7 +30,6 @@ body {
 }
 .hero-title-accent { color: #93c5fd; }
 
-/* Rotating Header Text Animation */
 .animated-text-wrapper { display: inline-grid; vertical-align: top; }
 .animated-text { grid-area: 1 / 1; opacity: 0; animation: textSwap 6s infinite ease-in-out; }
 .animated-text.delay { animation-delay: 3s; }
@@ -55,13 +49,12 @@ body {
 }
 .hero-btn:hover { background-color: #b50e38; transform: translateY(-2px); }
 
-/* 3. Bento Grid Topics Section */
+/* Topics Section */
 .topics-section { background: #ffffff; padding: 5.5rem 1.5rem 6rem; position: relative; }
 .container-topics { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 3.5rem; }
 
 .topics-bento-layout { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 1.75rem; align-items: stretch; }
 
-/* Left Featured Aircraft Banner Card */
 .topics-bento-banner {
   position: relative; border-radius: 28px; overflow: hidden;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08); min-height: 520px; display: flex;
@@ -81,7 +74,6 @@ body {
 }
 .bento-banner-title { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; }
 
-/* Right 2-Column Topic Cards Grid */
 .topics-cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
 
 .bento-card {
@@ -109,7 +101,7 @@ body {
 .bento-card:hover .bento-card-illustration { opacity: 0.9; transform: scale(1.08) translateY(-4px); }
 .bento-card-illustration svg { stroke: #3b82f6; }
 
-/* 4. Featured Articles Accordion (FAQ) */
+/* FAQ Section */
 .articles-section { background-color: #ffffff; padding: 4.5rem 1.5rem 5rem; }
 .container-articles { width: 92%; max-width: 1200px; margin: 0 auto; }
 .articles-header { margin-bottom: 1.8rem; }
@@ -125,7 +117,7 @@ body {
 .article-item[open] .dropdown-arrow { transform: rotate(180deg); stroke: #0a4174; }
 .article-content { padding: 1rem 1.5rem 1.25rem; font-size: 0.92rem; color: #475569; line-height: 1.6; border-top: 1px solid #f1f5f9; background: #fafcff; }
 
-/* 5. Support Desk Contact Form */
+/* Support Contact Form */
 .contact-form-section { background: linear-gradient(180deg, #ffffff 0%, #f0f4f8 100%); padding: 5rem 1.5rem 6rem; border-top: 1px solid #e2e8f0; }
 .container-form { max-width: 680px; margin: 0 auto; }
 .form-header { text-align: center; margin-bottom: 2.2rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
@@ -157,7 +149,7 @@ body {
 }
 .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37, 99, 235, 0.38); }
 
-/* 6. Mobile Responsive Media Queries */
+/* Mobile Responsive */
 @media (max-width: 1024px) {
   .topics-bento-layout { grid-template-columns: 1fr; }
   .topics-bento-banner { min-height: 340px; }

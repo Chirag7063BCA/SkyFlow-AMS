@@ -1,11 +1,7 @@
-<!-- Right-Side Popup Auth Drawer (Sign In & Sign Up) -->
 <div id="signupDrawer" class="signup-drawer">
-  <!-- Dark Backdrop Overlay -->
   <div id="drawerOverlay" class="drawer-overlay"></div>
 
-  <!-- Right Sliding Form Panel -->
   <div class="drawer-panel">
-    <!-- Drawer Header with Brand & Close Button -->
     <div class="drawer-header">
       <div class="drawer-brand">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -16,13 +12,11 @@
       <button type="button" id="closeDrawerBtn" class="close-btn">&times;</button>
     </div>
 
-    <!-- Segmented Tab Slider (Sign In / Sign Up) -->
     <div class="auth-tabs">
       <button type="button" id="signinTab" class="tab-btn active" onclick="switchTab('signin')">Sign In</button>
       <button type="button" id="signupTab" class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
     </div>
 
-    <!-- Sign In Form -->
     <form id="signinForm" class="auth-form">
       <div class="form-group">
         <label for="signinEmail">Email Address</label>
@@ -45,7 +39,6 @@
       <button type="submit" class="submit-btn">Sign In</button>
     </form>
 
-    <!-- Sign Up Form -->
     <form id="signupForm" class="auth-form" style="display: none;">
       <div class="form-group">
         <label for="fullName">Full Name</label>
@@ -70,12 +63,10 @@
       <button type="submit" class="submit-btn">Create Account</button>
     </form>
 
-    <!-- OR Divider -->
     <div class="divider">
       <span>OR</span>
     </div>
 
-    <!-- Google OAuth Button -->
     <button type="button" class="google-btn" onclick="handleGoogleLogin()">
       <svg width="18" height="18" viewBox="0 0 24 24">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -86,12 +77,10 @@
       <span>Continue with Google</span>
     </button>
 
-    <!-- Toggle Switch Footer -->
     <p id="authSwitchFooter" class="footer-text">
       Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Create account</a>
     </p>
 
-    <!-- Admin Panel Security Button -->
     <div class="admin-panel-access">
       <button type="button" class="admin-access-btn" onclick="promptAdminPin()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

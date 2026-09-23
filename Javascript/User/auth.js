@@ -1,4 +1,3 @@
-/* SkyFlow AMS - Authentication & Navbar Controller */
 const GOOGLE_CLIENT_ID = "630801472891-mqjmbt925glbg0do6qd3ei9c2adsuvei.apps.googleusercontent.com";
 
 function isSubdir() {

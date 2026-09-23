@@ -1,14 +1,4 @@
-/* ==========================================================================
-   SkyFlow AMS - Help Center Script
-   File: Javascript/User/help.js
-   Description: Handles dynamic component loading for Help Center, scroll header
-                transitions, and AJAX Support Desk query submission.
-   ========================================================================== */
-
-/**
- * 1. Component Loader Utility
- * Dynamically loads HTML header & footer partials into the page containers.
- */
+// Dynamically load HTML component partials
 async function loadHelpComponent(url, id) {
   try {
     const res = await fetch(url);
@@ -21,26 +11,19 @@ async function loadHelpComponent(url, id) {
   }
 }
 
-/**
- * 2. Help Center Page Initialization
- * Fetches Navbar & Footer, activates current route in navigation, and syncs auth state.
- */
+// Help Center Page Initialization
 async function initHelpPage() {
   await Promise.all([
     loadHelpComponent('../globalcomp/navbar.html', 'navbar-container'),
     loadHelpComponent('../globalcomp/footer.html', 'footer-container')
   ]);
 
-  // Trigger global page initialization from auth.js to bind nav routes & user session
   if (typeof initSkyFlowPage === 'function') {
     initSkyFlowPage('help');
   }
 }
 
-/**
- * 3. Support Desk Form Handler (FormSubmit AJAX Integration)
- * Processes user support queries asynchronously with loading state feedback.
- */
+// Support Desk Form Handler
 function setupHelpFormHandler() {
   const form = document.getElementById('helpForm');
   if (!form) return;
@@ -84,7 +67,6 @@ function setupHelpFormHandler() {
   });
 }
 
-/* 4. Execute Page Setup on DOM Ready */
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     initHelpPage();
